@@ -466,10 +466,51 @@ function switchView(v) {
   if (v === 'stats') loadStats();
 }
 
+// ── WEBSOCKET LIVE SYNC ────────────────────────────────────────
+
+function currentView() {
+  if (document.getElementById('view-stats').classList.contains('active')) return 'stats';
+  if (document.getElementById('view-products').classList.contains('active')) return 'products';
+  return 'pos';
+}
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}`);
+
+  ws.onopen = () => setConn(true);
+
+  ws.onmessage = (e) => {
+    const { event } = JSON.parse(e.data);
+    if (event === 'transaction') {
+      if (currentView() === 'stats') loadStats();
+      flashLive();
+    }
+    if (event === 'products_changed') {
+      loadProducts();
+    }
+    if (event === 'reset') {
+      if (currentView() === 'stats') loadStats();
+    }
+  };
+
+  ws.onclose = () => {
+    setConn(false);
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function flashLive() {
+  const dot = document.getElementById('conn-dot');
+  dot.style.transform = 'scale(1.8)';
+  setTimeout(() => dot.style.transform = '', 400);
+}
+
 // ── INIT ───────────────────────────────────────────────────────
 loadProducts();
-// Auto-refresh products every 30 seconds (for multi-device sync)
-setInterval(loadProducts, 30000);
+connectWS();
 </script>
 </body>
 </html>

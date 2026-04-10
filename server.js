@@ -2,9 +2,27 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+// WebSocket server
+const wss = new WebSocketServer({ server });
+const clients = new Set();
+
+wss.on('connection', (ws) => {
+  clients.add(ws);
+  ws.on('close', () => clients.delete(ws));
+});
+
+// Broadcast event to all connected clients
+function broadcast(event, data) {
+  const msg = JSON.stringify({ event, data });
+  clients.forEach(ws => { if (ws.readyState === 1) ws.send(msg); });
+}
 
 // Middleware
 app.use(cors());
@@ -76,12 +94,14 @@ app.post('/api/products', (req, res) => {
   if (!name || price == null || !category) return res.status(400).json({ error: 'Fehlende Felder' });
   const result = db.prepare('INSERT INTO products (name, price, category, icon) VALUES (?, ?, ?, ?)').run(name, price, category, icon || '📦');
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid);
+  broadcast('products_changed', {});
   res.json(product);
 });
 
 // DELETE product (soft delete)
 app.delete('/api/products/:id', (req, res) => {
   db.prepare('UPDATE products SET active = 0 WHERE id = ?').run(req.params.id);
+  broadcast('products_changed', {});
   res.json({ ok: true });
 });
 
@@ -119,6 +139,7 @@ app.post('/api/transactions', (req, res) => {
   });
 
   const saved = tx();
+  broadcast('transaction', { ...saved, items });
   res.json({ ...saved, items });
 });
 
@@ -139,6 +160,7 @@ app.get('/api/stats', (req, res) => {
 app.delete('/api/transactions/today', (req, res) => {
   db.prepare("DELETE FROM transaction_items WHERE transaction_id IN (SELECT id FROM transactions WHERE date(created_at) = date('now','localtime'))").run();
   db.prepare("DELETE FROM transactions WHERE date(created_at) = date('now','localtime')").run();
+  broadcast('reset', {});
   res.json({ ok: true });
 });
 
@@ -147,6 +169,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Kassensystem läuft auf Port ${PORT}`);
 });
