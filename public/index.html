@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Kassensystem</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#fff;--bg2:#f5f4f1;--bg3:#eeedea;
+  --text:#1a1a1a;--text2:#666;--text3:#aaa;
+  --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.22);
+  --r:10px;--r2:14px;
+  --green:#2d6a0f;--green-bg:#e6f4d7;
+  --blue:#1455a0;--blue-bg:#deedfb;
+  --red:#9b2626;--red-bg:#fce8e8;
+  --amber:#7a4a00;--amber-bg:#fef3d0;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+    --text:#f0efe9;--text2:#9e9d97;--text3:#5a5a55;
+    --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.2);
+    --green:#8dc44e;--green-bg:#172f06;
+    --blue:#72aee6;--blue-bg:#0a2540;
+    --red:#e07070;--red-bg:#3a0f0f;
+    --amber:#f0b840;--amber-bg:#2e1d00;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:15px;min-height:100vh;-webkit-tap-highlight-color:transparent;}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:1fr 360px;min-height:100vh;max-width:1200px;margin:0 auto;background:var(--bg);}
+@media(max-width:750px){.app{grid-template-columns:1fr;}.right{border-top:0.5px solid var(--border);max-height:45vh;}}
+.left{border-right:0.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.right{display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;gap:6px;padding:10px 14px;border-bottom:0.5px solid var(--border);align-items:center;flex-shrink:0;background:var(--bg);}
+.app-title{font-size:16px;font-weight:600;margin-right:6px;}
+.tab{padding:6px 14px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit;transition:all .15s;}
+.tab.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.conn-dot{width:9px;height:9px;border-radius:50%;background:#ccc;margin-left:auto;flex-shrink:0;transition:transform .3s;}
+.conn-dot.ok{background:var(--green);}
+.conn-dot.err{background:var(--red);}
+
+/* ── VIEWS ── */
+.view{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.view.active{display:flex;}
+
+/* ── CATEGORY BAR ── */
+.cat-bar{display:flex;gap:6px;padding:10px 14px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;flex-shrink:0;}
+.cat-btn{padding:5px 14px;border-radius:20px;border:0.5px solid var(--border);background:transparent;font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit;transition:all .1s;}
+.cat-btn.active{background:var(--text);color:var(--bg);}
+
+/* ── PRODUCTS GRID – big touch tiles ── */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1;align-content:start;}
+.prod-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r2);padding:14px 10px 12px;cursor:pointer;text-align:center;user-select:none;transition:transform .1s,border-color .15s;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.prod-card:active{transform:scale(.94);background:var(--bg2);}
+.prod-icon{font-size:40px;line-height:1;}
+.prod-name{font-size:13px;font-weight:600;line-height:1.3;}
+.prod-price{font-size:13px;color:var(--text2);background:var(--bg2);padding:2px 9px;border-radius:10px;}
+
+/* ── CART ── */
+.cart-header{padding:12px 14px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.cart-title{font-size:14px;font-weight:600;}
+.cart-clear{font-size:12px;color:var(--text2);cursor:pointer;background:none;border:none;font-family:inherit;}
+.cart-items{flex:1;overflow-y:auto;padding:6px 14px;}
+.cart-empty{color:var(--text3);font-size:13px;text-align:center;margin-top:32px;}
+.cart-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border);}
+.cart-item-name{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qty-ctrl{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.qty-btn{width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;color:var(--text);font-family:inherit;}
+.qty-val{font-size:14px;min-width:20px;text-align:center;font-weight:600;}
+.cart-item-price{font-size:12px;color:var(--text2);min-width:52px;text-align:right;flex-shrink:0;}
+
+/* ── CART FOOTER ── */
+.cart-footer{padding:12px 14px;border-top:0.5px solid var(--border);flex-shrink:0;}
+.total-tax{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px;}
+.total-row{display:flex;justify-content:space-between;font-size:17px;font-weight:700;margin-bottom:12px;}
+.pay-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pay-btn{padding:13px;border-radius:var(--r);border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:15px;font-weight:600;font-family:inherit;color:var(--text);transition:background .15s;}
+.pay-btn:hover{background:var(--bg2);}
+.pay-btn.primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+.pay-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ── PRODUCTS MGMT ── */
+.mgmt-toolbar{display:flex;gap:6px;padding:10px 14px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;flex-shrink:0;align-items:center;}
+.mgmt-toolbar input,.mgmt-toolbar select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);outline:none;}
+.mgmt-toolbar input.fname{flex:1;min-width:110px;}
+.mgmt-toolbar input[type=number]{width:80px;}
+.mgmt-toolbar input.ficon{width:56px;}
+.add-btn{padding:7px 16px;border-radius:var(--r);border:none;background:var(--text);color:var(--bg);cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap;font-weight:600;}
+.table-wrap{flex:1;overflow-y:auto;}
+.prod-table{width:100%;border-collapse:collapse;font-size:13px;}
+.prod-table th{text-align:left;padding:8px 14px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border);font-size:12px;position:sticky;top:0;background:var(--bg);}
+.prod-table td{padding:9px 14px;border-bottom:0.5px solid var(--border);}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:19px;line-height:1;font-family:inherit;}
+.del-btn:hover{color:var(--red);}
+.cat-badge{padding:2px 9px;border-radius:10px;font-size:11px;background:var(--bg2);color:var(--text2);}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;flex-shrink:0;}
+.stat-card{background:var(--bg2);border-radius:var(--r);padding:14px;}
+.stat-label{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.stat-value{font-size:22px;font-weight:700;}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.section-head{padding:8px 14px 4px;font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0;}
+.tx-list-wrap{flex:1;overflow-y:auto;padding:0 14px 8px;}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);}
+.tx-info{font-size:13px;min-width:0;flex:1;padding-right:8px;}
+.tx-names{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-time{font-size:11px;color:var(--text3);margin-top:1px;}
+.tx-right{text-align:right;flex-shrink:0;}
+.tx-amount{font-size:13px;font-weight:600;}
+.tx-method{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-top:2px;}
+.tx-cash{background:var(--green-bg);color:var(--green);}
+.tx-card{background:var(--blue-bg);color:var(--blue);}
+.reset-btn{margin:8px 14px 12px;padding:10px;border-radius:var(--r);border:0.5px solid var(--red);background:none;color:var(--red);cursor:pointer;font-size:13px;font-family:inherit;width:calc(100% - 28px);flex-shrink:0;}
+.reset-btn:hover{background:var(--red-bg);}
+
+/* ── SETTINGS (in admin) ── */
+.settings-section{padding:14px;border-top:0.5px solid var(--border);flex-shrink:0;}
+.settings-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text2);}
+.settings-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap;}
+.settings-row label{font-size:12px;color:var(--text2);min-width:120px;}
+.settings-row input{flex:1;font-family:inherit;font-size:13px;padding:6px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);min-width:80px;}
+.settings-row button{padding:6px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;}
+
+/* ── OVERLAY / MODAL base ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:var(--bg);border-radius:var(--r2);border:0.5px solid var(--border2);padding:24px;width:320px;max-width:95vw;}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:6px;}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:16px;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-btn{flex:1;padding:12px;border-radius:var(--r);border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:14px;font-family:inherit;color:var(--text);}
+.modal-btn.confirm{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+/* ── NUMPAD PAYMENT MODAL ── */
+.pay-modal{width:340px;}
+.pay-total-label{font-size:13px;color:var(--text2);margin-bottom:2px;}
+.pay-total-big{font-size:32px;font-weight:700;margin-bottom:4px;}
+.pay-input-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.pay-input-label{font-size:13px;color:var(--text2);min-width:90px;}
+.pay-input-val{font-size:22px;font-weight:700;flex:1;text-align:right;}
+.pay-change{font-size:14px;padding:8px 12px;border-radius:var(--r);margin-bottom:14px;text-align:center;font-weight:600;}
+.pay-change.ok{background:var(--green-bg);color:var(--green);}
+.pay-change.warn{background:var(--amber-bg);color:var(--amber);}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.np-btn{padding:16px 8px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;font-size:20px;font-weight:600;font-family:inherit;color:var(--text);transition:background .1s;}
+.np-btn:active{background:var(--border2);}
+.np-btn.del{font-size:16px;background:var(--bg3);}
+.np-btn.zero{grid-column:span 2;}
+
+/* ── PIN MODAL ── */
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:16px 0 8px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:background .15s;}
+.pin-dot.filled{background:var(--text);border-color:var(--text);}
+.pin-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.pin-btn{padding:18px 8px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;font-size:22px;font-weight:600;font-family:inherit;color:var(--text);transition:background .1s;}
+.pin-btn:active{background:var(--border2);}
+.pin-btn.del{font-size:15px;background:var(--bg3);}
+.pin-error{color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:4px;}
+
+/* ── ADMIN PASSWORD MODAL ── */
+.admin-input{width:100%;font-family:inherit;font-size:16px;padding:10px 12px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);margin-bottom:8px;outline:none;}
+.admin-error{color:var(--red);font-size:13px;min-height:18px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 22px;border-radius:20px;font-size:13px;z-index:400;transition:transform .25s;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.loading{color:var(--text3);font-size:13px;text-align:center;padding:28px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ── LEFT ── -->
+  <div class="left">
+    <div class="topbar">
+      <span class="app-title">🧾 Kasse</span>
+      <button class="tab active" onclick="switchView('pos')">Kasse</button>
+      <button class="tab" onclick="requirePin('stats')">Statistik</button>
+      <button class="tab" onclick="requireAdmin('products')">Produkte</button>
+      <div class="conn-dot" id="conn-dot"></div>
+    </div>
+
+    <!-- POS -->
+    <div class="view active" id="view-pos">
+      <div class="cat-bar" id="cat-bar"></div>
+      <div class="products-grid" id="products-grid"><div class="loading">Laden…</div></div>
+    </div>
+
+    <!-- STATS (PIN protected) -->
+    <div class="view" id="view-stats">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Umsatz heute</div><div class="stat-value">—</div></div>
+        <div class="stat-card"><div class="stat-label">Transaktionen</div><div class="stat-value">—</div></div>
+        <div class="stat-card"><div class="stat-label">Bargeld</div><div class="stat-value">—</div></div>
+        <div class="stat-card"><div class="stat-label">Karte</div><div class="stat-value">—</div></div>
+      </div>
+      <div class="section-head">Transaktionen heute</div>
+      <div class="tx-list-wrap" id="tx-list"><div class="loading">Laden…</div></div>
+      <button class="reset-btn" onclick="requirePinForReset()">Tagesabschluss durchführen</button>
+    </div>
+
+    <!-- PRODUCTS (Admin protected) -->
+    <div class="view" id="view-products">
+      <div class="mgmt-toolbar">
+        <input class="fname" type="text" id="new-name" placeholder="Produktname"/>
+        <input type="number" id="new-price" placeholder="Preis €" step="0.01" min="0"/>
+        <input class="ficon" type="text" id="new-icon" placeholder="🛍️" maxlength="2"/>
+        <select id="new-cat">
+          <option>Getränke</option><option>Essen</option><option>Sonstiges</option>
+        </select>
+        <button class="add-btn" onclick="addProduct()">+ Hinzufügen</button>
+      </div>
+      <div class="table-wrap">
+        <table class="prod-table">
+          <thead><tr><th></th><th>Name</th><th>Preis</th><th>Kategorie</th><th></th></tr></thead>
+          <tbody id="prod-tbody"><tr><td colspan="5" class="loading">Laden…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Zugangsdaten ändern</div>
+        <div class="settings-row">
+          <label>Admin-Passwort</label>
+          <input type="password" id="s-curr-pw" placeholder="Aktuelles Passwort"/>
+          <input type="password" id="s-new-pw" placeholder="Neues Passwort"/>
+          <button onclick="changePassword()">Speichern</button>
+        </div>
+        <div class="settings-row">
+          <label>Kassierer-PIN</label>
+          <input type="password" id="s-curr-pw2" placeholder="Admin-Passwort"/>
+          <input type="text" id="s-new-pin" placeholder="Neuer PIN (4–8 Ziffern)" maxlength="8" pattern="\d*" inputmode="numeric"/>
+          <button onclick="changePin()">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: CART ── -->
+  <div class="right">
+    <div class="cart-header">
+      <span class="cart-title">Warenkorb</span>
+      <button class="cart-clear" onclick="clearCart()">Leeren</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <div class="cart-empty">Noch keine Artikel</div>
+    </div>
+    <div class="cart-footer">
+      <div class="total-tax" id="total-tax">inkl. 19% MwSt: 0,00 €</div>
+      <div class="total-row"><span>Gesamt</span><span id="total-val">0,00 €</span></div>
+      <div class="pay-btns">
+        <button class="pay-btn" id="btn-cash" onclick="openPayModal('Bargeld')" disabled>💵 Bargeld</button>
+        <button class="pay-btn primary" id="btn-card" onclick="openPayModal('Karte')" disabled>💳 Karte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAYMENT NUMPAD MODAL ══ -->
+<div class="overlay" id="pay-overlay">
+  <div class="modal pay-modal">
+    <h3 id="pay-title">Zahlung</h3>
+    <div class="pay-total-label">Zu zahlen</div>
+    <div class="pay-total-big" id="pay-due">0,00 €</div>
+    <div class="pay-input-row">
+      <span class="pay-input-label" id="pay-input-label">Gegeben</span>
+      <span class="pay-input-val" id="pay-input-val">0,00 €</span>
+    </div>
+    <div class="pay-change" id="pay-change" style="display:none"></div>
+    <div class="numpad">
+      <button class="np-btn" onclick="npKey('1')">1</button>
+      <button class="np-btn" onclick="npKey('2')">2</button>
+      <button class="np-btn" onclick="npKey('3')">3</button>
+      <button class="np-btn" onclick="npKey('4')">4</button>
+      <button class="np-btn" onclick="npKey('5')">5</button>
+      <button class="np-btn" onclick="npKey('6')">6</button>
+      <button class="np-btn" onclick="npKey('7')">7</button>
+      <button class="np-btn" onclick="npKey('8')">8</button>
+      <button class="np-btn" onclick="npKey('9')">9</button>
+      <button class="np-btn" onclick="npKey('.')">.</button>
+      <button class="np-btn zero" onclick="npKey('0')">0</button>
+      <button class="np-btn del" onclick="npDel()">⌫</button>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="closePayModal()">Abbrechen</button>
+      <button class="modal-btn confirm" id="pay-confirm-btn" onclick="confirmPayment()">Bestätigen ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PIN MODAL ══ -->
+<div class="overlay" id="pin-overlay">
+  <div class="modal" style="width:280px;text-align:center;">
+    <h3>PIN eingeben</h3>
+    <p>Kassierer-PIN erforderlich</p>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-numpad">
+      <button class="pin-btn" onclick="pinKey('1')">1</button>
+      <button class="pin-btn" onclick="pinKey('2')">2</button>
+      <button class="pin-btn" onclick="pinKey('3')">3</button>
+      <button class="pin-btn" onclick="pinKey('4')">4</button>
+      <button class="pin-btn" onclick="pinKey('5')">5</button>
+      <button class="pin-btn" onclick="pinKey('6')">6</button>
+      <button class="pin-btn" onclick="pinKey('7')">7</button>
+      <button class="pin-btn" onclick="pinKey('8')">8</button>
+      <button class="pin-btn" onclick="pinKey('9')">9</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+      <button class="pin-btn" onclick="pinKey('0')">0</button>
+      <button class="pin-btn" onclick="pinCancel()" style="font-size:13px;">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PASSWORD MODAL ══ -->
+<div class="overlay" id="admin-overlay">
+  <div class="modal" style="width:300px;">
+    <h3>Admin-Zugang</h3>
+    <p>Passwort eingeben um fortzufahren</p>
+    <input class="admin-input" type="password" id="admin-pw-input" placeholder="Passwort" onkeydown="if(event.key==='Enter')submitAdmin()"/>
+    <div class="admin-error" id="admin-error"></div>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="closeAdminModal()">Abbrechen</button>
+      <button class="modal-btn confirm" onclick="submitAdmin()">Weiter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let products = [];
+let cart = [];
+let currentCat = 'Alle';
+
+// Auth state (session only – clears on page reload)
+let pinUnlocked = false;
+let adminUnlocked = false;
+let adminPasswordCache = '';
+
+// ── HELPERS ──────────────────────────────────────────────────
+
+function fmt(n){ return Number(n).toFixed(2).replace('.',',') + ' €'; }
+
+function toast(msg, dur=2200){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function setConn(ok){
+  const d = document.getElementById('conn-dot');
+  d.className = 'conn-dot ' + (ok ? 'ok' : 'err');
+}
+
+async function apiFetch(path, opts={}){
+  try {
+    const res = await fetch(API + path, { headers:{'Content-Type':'application/json'}, ...opts });
+    if (!res.ok) throw new Error(await res.text());
+    setConn(true);
+    return await res.json();
+  } catch(e) { setConn(false); throw e; }
+}
+
+// ── VIEW SWITCHING ────────────────────────────────────────────
+
+function switchView(v){
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const idx = ['pos','stats','products'].indexOf(v);
+  if (idx >= 0) tabs[idx].classList.add('active');
+  if (v === 'stats') loadStats();
+  if (v === 'products') loadProdTable();
+}
+
+// ── PIN AUTH ──────────────────────────────────────────────────
+
+let pinTarget = '';
+let pinValue = '';
+let pinCallback = null;
+
+function requirePin(view){
+  if (pinUnlocked){ switchView(view); return; }
+  pinTarget = view;
+  pinValue = '';
+  pinCallback = null;
+  document.getElementById('pin-error').textContent = '';
+  updatePinDots();
+  document.getElementById('pin-overlay').classList.add('show');
+}
+
+function requirePinForReset(){
+  pinTarget = '';
+  pinValue = '';
+  pinCallback = () => doReset();
+  document.getElementById('pin-error').textContent = '';
+  updatePinDots();
+  document.getElementById('pin-overlay').classList.add('show');
+}
+
+function pinKey(k){
+  if (pinValue.length >= 8) return;
+  pinValue += k;
+  updatePinDots();
+  if (pinValue.length >= 4) setTimeout(submitPin, 300);
+}
+
+function pinDel(){ pinValue = pinValue.slice(0,-1); updatePinDots(); }
+
+function pinCancel(){
+  document.getElementById('pin-overlay').classList.remove('show');
+  pinValue = '';
+}
+
+function updatePinDots(){
+  for (let i=0;i<4;i++){
+    const d = document.getElementById('pd'+i);
+    if (d) d.className = 'pin-dot' + (i < pinValue.length ? ' filled':'');
+  }
+}
+
+async function submitPin(){
+  try {
+    const { ok } = await apiFetch('/api/auth/pin',{method:'POST',body:JSON.stringify({pin:pinValue})});
+    if (ok){
+      pinUnlocked = true;
+      document.getElementById('pin-overlay').classList.remove('show');
+      if (pinCallback){ pinCallback(); pinCallback=null; }
+      else if (pinTarget) switchView(pinTarget);
+    } else {
+      document.getElementById('pin-error').textContent = 'Falscher PIN';
+      pinValue = '';
+      updatePinDots();
+      setTimeout(()=>document.getElementById('pin-error').textContent='', 1500);
+    }
+  } catch { toast('Verbindungsfehler'); pinValue=''; updatePinDots(); }
+}
+
+// ── ADMIN AUTH ────────────────────────────────────────────────
+
+let adminTarget = '';
+
+function requireAdmin(view){
+  if (adminUnlocked){ switchView(view); return; }
+  adminTarget = view;
+  document.getElementById('admin-pw-input').value = '';
+  document.getElementById('admin-error').textContent = '';
+  document.getElementById('admin-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('admin-pw-input').focus(),100);
+}
+
+function closeAdminModal(){
+  document.getElementById('admin-overlay').classList.remove('show');
+}
+
+async function submitAdmin(){
+  const pw = document.getElementById('admin-pw-input').value;
+  try {
+    const { ok } = await apiFetch('/api/auth/admin',{method:'POST',body:JSON.stringify({password:pw})});
+    if (ok){
+      adminUnlocked = true;
+      adminPasswordCache = pw;
+      closeAdminModal();
+      switchView(adminTarget);
+    } else {
+      document.getElementById('admin-error').textContent = 'Falsches Passwort';
+    }
+  } catch { document.getElementById('admin-error').textContent = 'Verbindungsfehler'; }
+}
+
+// ── PRODUCTS ─────────────────────────────────────────────────
+
+async function loadProducts(){
+  try {
+    products = await apiFetch('/api/products');
+    renderCatBar();
+    renderProducts();
+  } catch { document.getElementById('products-grid').innerHTML='<p class="loading">Verbindungsfehler</p>'; }
+}
+
+async function loadProdTable(){
+  try {
+    products = await apiFetch('/api/products');
+    renderProdTable();
+  } catch {}
+}
+
+function getCategories(){ return ['Alle',...new Set(products.map(p=>p.category))]; }
+
+function renderCatBar(){
+  document.getElementById('cat-bar').innerHTML = getCategories().map(c=>
+    `<button class="cat-btn${c===currentCat?' active':''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setCat(c){ currentCat=c; renderCatBar(); renderProducts(); }
+
+function renderProducts(){
+  const list = currentCat==='Alle' ? products : products.filter(p=>p.category===currentCat);
+  document.getElementById('products-grid').innerHTML = list.length
+    ? list.map(p=>`<div class="prod-card" onclick="addToCart(${p.id})">
+        <div class="prod-icon">${p.icon}</div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-price">${fmt(p.price)}</div>
+      </div>`).join('')
+    : '<p class="loading">Keine Produkte</p>';
+}
+
+function renderProdTable(){
+  document.getElementById('prod-tbody').innerHTML = products.length
+    ? products.map(p=>`<tr>
+        <td style="font-size:22px;">${p.icon}</td>
+        <td>${p.name}</td>
+        <td>${fmt(p.price)}</td>
+        <td><span class="cat-badge">${p.category}</span></td>
+        <td><button class="del-btn" onclick="deleteProduct(${p.id})">×</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="loading">Keine Produkte</td></tr>';
+}
+
+async function addProduct(){
+  const name = document.getElementById('new-name').value.trim();
+  const price = parseFloat(document.getElementById('new-price').value);
+  const icon = document.getElementById('new-icon').value.trim() || '📦';
+  const category = document.getElementById('new-cat').value;
+  if (!name || isNaN(price) || price < 0){ toast('Bitte Name und Preis eingeben'); return; }
+  try {
+    await apiFetch('/api/products',{method:'POST',body:JSON.stringify({name,price,category,icon,adminPassword:adminPasswordCache})});
+    document.getElementById('new-name').value='';
+    document.getElementById('new-price').value='';
+    document.getElementById('new-icon').value='';
+    await loadProducts();
+    renderProdTable();
+    toast('Produkt hinzugefügt ✓');
+  } catch(e){ toast('Fehler: '+e.message); }
+}
+
+async function deleteProduct(id){
+  if (!confirm('Produkt wirklich löschen?')) return;
+  try {
+    await apiFetch('/api/products/'+id,{method:'DELETE',body:JSON.stringify({adminPassword:adminPasswordCache})});
+    cart = cart.filter(c=>c.id!==id);
+    renderCart();
+    await loadProducts();
+    renderProdTable();
+    toast('Produkt gelöscht');
+  } catch(e){ toast('Fehler: '+e.message); }
+}
+
+// ── CART ─────────────────────────────────────────────────────
+
+function addToCart(id){
+  const p = products.find(x=>x.id===id);
+  if (!p) return;
+  const ex = cart.find(x=>x.id===id);
+  if (ex) ex.qty++;
+  else cart.push({...p,qty:1});
+  renderCart();
+}
+
+function changeQty(id,delta){
+  const i = cart.findIndex(x=>x.id===id);
+  if (i<0) return;
+  cart[i].qty += delta;
+  if (cart[i].qty<=0) cart.splice(i,1);
+  renderCart();
+}
+
+function clearCart(){ cart=[]; renderCart(); }
+
+function getTotal(){ return cart.reduce((s,i)=>s+i.price*i.qty,0); }
+
+function renderCart(){
+  const el = document.getElementById('cart-items');
+  if (cart.length===0){
+    el.innerHTML='<div class="cart-empty">Noch keine Artikel</div>';
+  } else {
+    el.innerHTML = cart.map(item=>`
+      <div class="cart-item">
+        <span class="cart-item-name">${item.icon} ${item.name}</span>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button>
+          <span class="qty-val">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${item.id},1)">+</button>
+        </div>
+        <span class="cart-item-price">${fmt(item.price*item.qty)}</span>
+      </div>`).join('');
+  }
+  const total = getTotal();
+  const tax = total - total/1.19;
+  document.getElementById('total-val').textContent = fmt(total);
+  document.getElementById('total-tax').textContent = 'inkl. 19% MwSt: '+fmt(tax);
+  const has = cart.length > 0;
+  document.getElementById('btn-cash').disabled = !has;
+  document.getElementById('btn-card').disabled = !has;
+}
+
+// ── PAYMENT NUMPAD ────────────────────────────────────────────
+
+let payMethod = '';
+let npRaw = '';
+
+function openPayModal(method){
+  if (cart.length===0) return;
+  payMethod = method;
+  npRaw = '';
+  updateNumpad();
+  const total = getTotal();
+  document.getElementById('pay-title').textContent = method === 'Bargeld' ? '💵 Barzahlung' : '💳 Kartenzahlung';
+  document.getElementById('pay-due').textContent = fmt(total);
+  document.getElementById('pay-input-label').textContent = method === 'Bargeld' ? 'Gegeben' : 'Betrag';
+  document.getElementById('pay-change').style.display = 'none';
+  document.getElementById('pay-overlay').classList.add('show');
+}
+
+function closePayModal(){ document.getElementById('pay-overlay').classList.remove('show'); }
+
+function npKey(k){
+  // max 2 decimal places
+  if (k==='.' && npRaw.includes('.')) return;
+  const parts = npRaw.split('.');
+  if (parts[1] && parts[1].length>=2) return;
+  if (npRaw==='' && k==='.') npRaw='0';
+  npRaw += k;
+  updateNumpad();
+}
+
+function npDel(){
+  npRaw = npRaw.slice(0,-1);
+  updateNumpad();
+}
+
+function updateNumpad(){
+  const total = getTotal();
+  const given = parseFloat(npRaw) || 0;
+  // Display
+  const displayVal = npRaw==='' ? '0,00 €' : (npRaw.includes('.') ? npRaw.replace('.',',')+(npRaw.endsWith('.')?'':'')+' €' : npRaw+',00 €');
+  document.getElementById('pay-input-val').textContent = npRaw==='' ? '—' : (npRaw.replace('.',',')+' €');
+
+  const changeEl = document.getElementById('pay-change');
+  if (payMethod==='Bargeld' && given > 0){
+    const change = given - total;
+    changeEl.style.display = 'block';
+    if (change >= 0){
+      changeEl.className = 'pay-change ok';
+      changeEl.textContent = 'Rückgeld: ' + fmt(change);
+    } else {
+      changeEl.className = 'pay-change warn';
+      changeEl.textContent = 'Fehlbetrag: ' + fmt(Math.abs(change));
+    }
+  } else if (payMethod==='Karte' && given > 0){
+    changeEl.style.display = 'block';
+    changeEl.className = 'pay-change ok';
+    changeEl.textContent = 'Eingegeben: ' + fmt(given);
+  } else {
+    changeEl.style.display = 'none';
+  }
+}
+
+async function confirmPayment(){
+  const total = getTotal();
+  const items = cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty,icon:i.icon}));
+  closePayModal();
+  try {
+    await apiFetch('/api/transactions',{method:'POST',body:JSON.stringify({total,method:payMethod,items})});
+    cart=[];
+    npRaw='';
+    renderCart();
+    toast((payMethod==='Bargeld'?'💵':'💳')+' Zahlung erfasst ✓');
+  } catch { toast('Fehler beim Speichern'); }
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+
+async function loadStats(){
+  try {
+    const [stats,txs] = await Promise.all([apiFetch('/api/stats'),apiFetch('/api/transactions')]);
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Umsatz heute</div><div class="stat-value">${fmt(stats.total)}</div><div class="stat-sub">${stats.count} Transaktionen</div></div>
+      <div class="stat-card"><div class="stat-label">Ø pro Bon</div><div class="stat-value">${fmt(stats.count>0?stats.total/stats.count:0)}</div></div>
+      <div class="stat-card"><div class="stat-label">Bargeld</div><div class="stat-value">${fmt(stats.cash)}</div></div>
+      <div class="stat-card"><div class="stat-label">Karte</div><div class="stat-value">${fmt(stats.card)}</div></div>`;
+    document.getElementById('tx-list').innerHTML = txs.length
+      ? txs.map(t=>`<div class="tx-item">
+          <div class="tx-info"><div class="tx-names">${t.items.map(i=>i.name).join(', ')}</div><div class="tx-time">${t.created_at}</div></div>
+          <div class="tx-right"><div class="tx-amount">${fmt(t.total)}</div>
+          <span class="tx-method ${t.method==='Bargeld'?'tx-cash':'tx-card'}">${t.method}</span></div>
+        </div>`).join('')
+      : '<p class="loading">Noch keine Transaktionen heute</p>';
+  } catch { toast('Statistik konnte nicht geladen werden'); }
+}
+
+function requirePinForReset(){
+  requirePin('__reset__');
+}
+
+async function doReset(){
+  if (!confirm('Tagesabschluss? Alle heutigen Transaktionen werden gelöscht.')) return;
+  // We need the PIN again for the server
+  const pin = prompt('PIN nochmals eingeben:');
+  try {
+    await apiFetch('/api/transactions/today',{method:'DELETE',body:JSON.stringify({pin})});
+    await loadStats();
+    toast('Tagesabschluss durchgeführt ✓');
+  } catch { toast('Fehler beim Tagesabschluss'); }
+}
+
+// Override requirePin for reset flow
+const _origRequirePin = requirePin;
+function requirePin(target){
+  if (target==='__reset__'){
+    if (pinUnlocked){ doReset(); return; }
+    pinTarget='';
+    pinValue='';
+    pinCallback=()=>doReset();
+    document.getElementById('pin-error').textContent='';
+    updatePinDots();
+    document.getElementById('pin-overlay').classList.add('show');
+    return;
+  }
+  if (pinUnlocked){ switchView(target); return; }
+  pinTarget=target;
+  pinValue='';
+  pinCallback=null;
+  document.getElementById('pin-error').textContent='';
+  updatePinDots();
+  document.getElementById('pin-overlay').classList.add('show');
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────
+
+async function changePassword(){
+  const curr = document.getElementById('s-curr-pw').value;
+  const nw = document.getElementById('s-new-pw').value;
+  if (!curr || !nw){ toast('Bitte beide Felder ausfüllen'); return; }
+  try {
+    const {ok,error} = await apiFetch('/api/auth/change-password',{method:'POST',body:JSON.stringify({adminPassword:curr,newPassword:nw})});
+    if (ok){ adminPasswordCache=nw; toast('Passwort geändert ✓'); document.getElementById('s-curr-pw').value=''; document.getElementById('s-new-pw').value=''; }
+    else toast('Fehler: '+(error||'Unbekannt'));
+  } catch(e){ toast('Fehler: '+e.message); }
+}
+
+async function changePin(){
+  const curr = document.getElementById('s-curr-pw2').value;
+  const pin = document.getElementById('s-new-pin').value;
+  if (!curr || !pin){ toast('Bitte beide Felder ausfüllen'); return; }
+  try {
+    const {ok,error} = await apiFetch('/api/auth/change-pin',{method:'POST',body:JSON.stringify({adminPassword:curr,newPin:pin})});
+    if (ok){ pinUnlocked=false; toast('PIN geändert ✓'); document.getElementById('s-curr-pw2').value=''; document.getElementById('s-new-pin').value=''; }
+    else toast('Fehler: '+(error||'Unbekannt'));
+  } catch(e){ toast('Fehler: '+e.message); }
+}
+
+// ── WEBSOCKET ─────────────────────────────────────────────────
+
+function connectWS(){
+  const proto = location.protocol==='https:'?'wss':'ws';
+  const ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onopen = ()=>setConn(true);
+  ws.onmessage = (e)=>{
+    const {event} = JSON.parse(e.data);
+    if (event==='transaction'){
+      const v = document.querySelector('.view.active')?.id;
+      if (v==='view-stats') loadStats();
+      const d = document.getElementById('conn-dot');
+      d.style.transform='scale(1.8)';
+      setTimeout(()=>d.style.transform='',400);
+    }
+    if (event==='products_changed') loadProducts();
+    if (event==='reset'){
+      const v = document.querySelector('.view.active')?.id;
+      if (v==='view-stats') loadStats();
+    }
+  };
+  ws.onclose = ()=>{ setConn(false); setTimeout(connectWS,3000); };
+  ws.onerror = ()=>ws.close();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadProducts();
+connectWS();
+</script>
+</body>
+</html>
