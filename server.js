@@ -9,191 +9,205 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
-// WebSocket
+// ── WebSocket ─────────────────────────────────────────────────
 const wss = new WebSocketServer({ server });
 const clients = new Set();
-wss.on('connection', (ws) => {
-  clients.add(ws);
-  ws.on('close', () => clients.delete(ws));
-});
+wss.on('connection', ws => { clients.add(ws); ws.on('close', () => clients.delete(ws)); });
 function broadcast(event, data) {
   const msg = JSON.stringify({ event, data });
   clients.forEach(ws => { if (ws.readyState === 1) ws.send(msg); });
 }
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database
+// ── Database ──────────────────────────────────────────────────
 const db = new Database(process.env.DB_PATH || './kasse.db');
 db.exec(`
-  CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  CREATE TABLE IF NOT EXISTS floors (
+    id   TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    price REAL NOT NULL,
+    emoji TEXT DEFAULT '🍺',
+    color TEXT DEFAULT '#b45309',
+    light TEXT DEFAULT '#fef3c7'
+  );
+  CREATE TABLE IF NOT EXISTS products (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    floor_id TEXT NOT NULL,
+    name     TEXT NOT NULL,
+    price    REAL NOT NULL,
     category TEXT NOT NULL,
-    icon TEXT DEFAULT '📦',
-    active INTEGER DEFAULT 1
+    icon     TEXT DEFAULT '📦',
+    active   INTEGER DEFAULT 1,
+    FOREIGN KEY(floor_id) REFERENCES floors(id)
   );
   CREATE TABLE IF NOT EXISTS transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    total REAL NOT NULL,
-    method TEXT NOT NULL,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    floor_id   TEXT NOT NULL,
+    total      REAL NOT NULL,
+    method     TEXT NOT NULL,
     items_json TEXT NOT NULL,
     created_at TEXT DEFAULT (datetime('now','localtime'))
   );
-  CREATE TABLE IF NOT EXISTS transaction_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    transaction_id INTEGER NOT NULL,
-    product_id INTEGER,
-    product_name TEXT NOT NULL,
-    price REAL NOT NULL,
-    qty INTEGER NOT NULL,
-    FOREIGN KEY(transaction_id) REFERENCES transactions(id)
-  );
   CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
+    key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
 `);
 
-// Default PINs/passwords if not set
-// Kassierer-PIN: 1234  |  Admin-Passwort: admin123
+// ── Seed defaults ─────────────────────────────────────────────
 function getSetting(key, def) {
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
-  return row ? row.value : def;
+  const r = db.prepare('SELECT value FROM settings WHERE key=?').get(key);
+  return r ? r.value : def;
 }
 function setSetting(key, value) {
-  db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
+  db.prepare('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)').run(key, value);
 }
 
-// Seed default products
-const count = db.prepare('SELECT COUNT(*) as c FROM products').get();
-if (count.c === 0) {
-  const ins = db.prepare('INSERT INTO products (name, price, category, icon) VALUES (?, ?, ?, ?)');
+const floorCount = db.prepare('SELECT COUNT(*) as c FROM floors').get().c;
+if (floorCount === 0) {
+  const iFloor = db.prepare('INSERT INTO floors(id,name,emoji,color,light) VALUES(?,?,?,?,?)');
+  const iProd  = db.prepare('INSERT INTO products(floor_id,name,price,category,icon) VALUES(?,?,?,?,?)');
+
+  iFloor.run('keller','Kellerbar','🍺','#b45309','#fef3c7');
   [
-    ['Cola', 2.50, 'Getränke', '🥤'],
-    ['Wasser', 1.50, 'Getränke', '💧'],
-    ['Bier', 3.00, 'Getränke', '🍺'],
-    ['Kaffee', 2.00, 'Getränke', '☕'],
-    ['Bratwurst', 3.50, 'Essen', '🌭'],
-    ['Burger', 5.00, 'Essen', '🍔'],
-    ['Pommes', 2.50, 'Essen', '🍟'],
-    ['Kuchen', 2.00, 'Essen', '🍰'],
-    ['Lotterielos', 1.00, 'Sonstiges', '🎟️'],
-    ['T-Shirt', 10.00, 'Sonstiges', '👕'],
-  ].forEach(d => ins.run(...d));
+    ['Bier 0,5L',3.0,'Bier','🍺'],['Bier 0,3L',2.0,'Bier','🍻'],['Radler',2.5,'Bier','🍋'],
+    ['Shot Tequila',2.5,'Shots','🥃'],['Shot Vodka',2.5,'Shots','🔥'],
+    ['Shot Rum',2.5,'Shots','💀'],['Jäger Shot',2.0,'Shots','🦌'],
+  ].forEach(([n,p,c,i]) => iProd.run('keller',n,p,c,i));
+
+  iFloor.run('erd','Erdgeschossbar','🥂','#6d28d9','#ede9fe');
+  [
+    ['Bier 0,5L',3.0,'Bier','🍺'],['Bier 0,3L',2.0,'Bier','🍻'],
+    ['Sekt',4.0,'Sekt & Wein','🥂'],['Prosecco',3.5,'Sekt & Wein','🍾'],
+    ['Matte',3.0,'Sekt & Wein','🧃'],['Äppler',2.5,'Sekt & Wein','🍏'],
+    ['Wein rot',3.5,'Sekt & Wein','🍷'],['Wein weiß',3.5,'Sekt & Wein','🥃'],
+    ['Shot Tequila',2.5,'Shots','🔥'],['Shot Vodka',2.5,'Shots','💀'],
+    ['Cola',2.0,'Alkoholfrei','🥤'],['Wasser',1.5,'Alkoholfrei','💧'],
+    ['Orangensaft',2.0,'Alkoholfrei','🍊'],['Apfelsaft',2.0,'Alkoholfrei','🍎'],
+    ['Spezi',2.0,'Alkoholfrei','🧃'],
+  ].forEach(([n,p,c,i]) => iProd.run('erd',n,p,c,i));
 }
 
-// ── AUTH ─────────────────────────────────────────────────────────
+// ── Auth ──────────────────────────────────────────────────────
+app.post('/api/auth/pin',      (req,res) => res.json({ ok: req.body.pin      === getSetting('kassierer_pin','1234') }));
+app.post('/api/auth/admin',    (req,res) => res.json({ ok: req.body.password === getSetting('admin_password','admin123') }));
 
-// Verify kassierer PIN (protects stats, tagesabschluss)
-app.post('/api/auth/pin', (req, res) => {
-  const { pin } = req.body;
-  const stored = getSetting('kassierer_pin', '1234');
-  res.json({ ok: pin === stored });
+app.post('/api/auth/change-pin', (req,res) => {
+  if (req.body.adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Falsches Admin-Passwort' });
+  if (!/^\d{4,8}$/.test(req.body.newPin)) return res.status(400).json({ error:'PIN muss 4–8 Ziffern haben' });
+  setSetting('kassierer_pin', req.body.newPin);
+  res.json({ ok:true });
+});
+app.post('/api/auth/change-password', (req,res) => {
+  if (req.body.adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Falsches Admin-Passwort' });
+  if (!req.body.newPassword || req.body.newPassword.length < 4) return res.status(400).json({ error:'Passwort zu kurz' });
+  setSetting('admin_password', req.body.newPassword);
+  res.json({ ok:true });
 });
 
-// Verify admin password (protects products management)
-app.post('/api/auth/admin', (req, res) => {
-  const { password } = req.body;
-  const stored = getSetting('admin_password', 'admin123');
-  res.json({ ok: password === stored });
+// ── Floors ────────────────────────────────────────────────────
+app.get('/api/floors', (req,res) => res.json(db.prepare('SELECT * FROM floors').all()));
+
+app.post('/api/floors', (req,res) => {
+  const { id, name, emoji, color, light, adminPassword } = req.body;
+  if (adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Nicht autorisiert' });
+  if (!id || !name) return res.status(400).json({ error:'Fehlende Felder' });
+  db.prepare('INSERT INTO floors(id,name,emoji,color,light) VALUES(?,?,?,?,?)').run(id, name, emoji||'🍺', color||'#b45309', light||'#fef3c7');
+  broadcast('floors_changed', {});
+  res.json(db.prepare('SELECT * FROM floors WHERE id=?').get(id));
 });
 
-// Change PIN (admin only)
-app.post('/api/auth/change-pin', (req, res) => {
-  const { adminPassword, newPin } = req.body;
-  const stored = getSetting('admin_password', 'admin123');
-  if (adminPassword !== stored) return res.status(403).json({ error: 'Falsches Admin-Passwort' });
-  if (!/^\d{4,8}$/.test(newPin)) return res.status(400).json({ error: 'PIN muss 4-8 Ziffern haben' });
-  setSetting('kassierer_pin', newPin);
-  res.json({ ok: true });
-});
-
-// Change admin password (admin only)
-app.post('/api/auth/change-password', (req, res) => {
-  const { adminPassword, newPassword } = req.body;
-  const stored = getSetting('admin_password', 'admin123');
-  if (adminPassword !== stored) return res.status(403).json({ error: 'Falsches Admin-Passwort' });
-  if (newPassword.length < 4) return res.status(400).json({ error: 'Passwort zu kurz' });
-  setSetting('admin_password', newPassword);
-  res.json({ ok: true });
-});
-
-// ── PRODUCTS ─────────────────────────────────────────────────────
-
-app.get('/api/products', (req, res) => {
-  res.json(db.prepare('SELECT * FROM products WHERE active = 1 ORDER BY category, name').all());
-});
-
-app.post('/api/products', (req, res) => {
-  const { name, price, category, icon, adminPassword } = req.body;
-  if (adminPassword !== getSetting('admin_password', 'admin123'))
-    return res.status(403).json({ error: 'Nicht autorisiert' });
-  if (!name || price == null || !category) return res.status(400).json({ error: 'Fehlende Felder' });
-  const result = db.prepare('INSERT INTO products (name, price, category, icon) VALUES (?, ?, ?, ?)').run(name, price, category, icon || '📦');
-  broadcast('products_changed', {});
-  res.json(db.prepare('SELECT * FROM products WHERE id = ?').get(result.lastInsertRowid));
-});
-
-app.delete('/api/products/:id', (req, res) => {
+app.delete('/api/floors/:id', (req,res) => {
   const { adminPassword } = req.body;
-  if (adminPassword !== getSetting('admin_password', 'admin123'))
-    return res.status(403).json({ error: 'Nicht autorisiert' });
-  db.prepare('UPDATE products SET active = 0 WHERE id = ?').run(req.params.id);
-  broadcast('products_changed', {});
-  res.json({ ok: true });
+  if (adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Nicht autorisiert' });
+  db.prepare('UPDATE products SET active=0 WHERE floor_id=?').run(req.params.id);
+  db.prepare('DELETE FROM floors WHERE id=?').run(req.params.id);
+  broadcast('floors_changed', {});
+  res.json({ ok:true });
 });
 
-// ── TRANSACTIONS ─────────────────────────────────────────────────
+// ── Products ──────────────────────────────────────────────────
+app.get('/api/products', (req,res) => {
+  const where = req.query.floor ? 'AND floor_id=?' : '';
+  const args  = req.query.floor ? [req.query.floor] : [];
+  res.json(db.prepare(`SELECT * FROM products WHERE active=1 ${where} ORDER BY floor_id,category,name`).all(...args));
+});
 
-app.get('/api/transactions', (req, res) => {
-  const rows = req.query.all
-    ? db.prepare('SELECT * FROM transactions ORDER BY created_at DESC').all()
-    : db.prepare("SELECT * FROM transactions WHERE date(created_at) = date('now','localtime') ORDER BY created_at DESC").all();
+app.post('/api/products', (req,res) => {
+  const { floor_id, name, price, category, icon, adminPassword } = req.body;
+  if (adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Nicht autorisiert' });
+  if (!floor_id||!name||price==null||!category) return res.status(400).json({ error:'Fehlende Felder' });
+  const r = db.prepare('INSERT INTO products(floor_id,name,price,category,icon) VALUES(?,?,?,?,?)').run(floor_id,name,price,category,icon||'📦');
+  broadcast('products_changed', { floor_id });
+  res.json(db.prepare('SELECT * FROM products WHERE id=?').get(r.lastInsertRowid));
+});
+
+app.delete('/api/products/:id', (req,res) => {
+  const { adminPassword } = req.body;
+  if (adminPassword !== getSetting('admin_password','admin123')) return res.status(403).json({ error:'Nicht autorisiert' });
+  const p = db.prepare('SELECT floor_id FROM products WHERE id=?').get(req.params.id);
+  db.prepare('UPDATE products SET active=0 WHERE id=?').run(req.params.id);
+  broadcast('products_changed', { floor_id: p?.floor_id });
+  res.json({ ok:true });
+});
+
+// ── Transactions ──────────────────────────────────────────────
+app.get('/api/transactions', (req,res) => {
+  let sql = "SELECT * FROM transactions WHERE date(created_at)=date('now','localtime')";
+  const args = [];
+  if (req.query.floor) { sql += ' AND floor_id=?'; args.push(req.query.floor); }
+  if (req.query.all)   sql = 'SELECT * FROM transactions';
+  sql += ' ORDER BY created_at DESC';
+  const rows = db.prepare(sql).all(...args);
   res.json(rows.map(t => ({ ...t, items: JSON.parse(t.items_json) })));
 });
 
-app.post('/api/transactions', (req, res) => {
-  const { total, method, items } = req.body;
-  if (!total || !method || !items?.length) return res.status(400).json({ error: 'Fehlende Felder' });
-  const insertTx = db.prepare('INSERT INTO transactions (total, method, items_json) VALUES (?, ?, ?)');
-  const insertItem = db.prepare('INSERT INTO transaction_items (transaction_id, product_id, product_name, price, qty) VALUES (?, ?, ?, ?, ?)');
-  const tx = db.transaction(() => {
-    const r = insertTx.run(total, method, JSON.stringify(items));
-    items.forEach(i => insertItem.run(r.lastInsertRowid, i.id, i.name, i.price, i.qty));
-    return db.prepare('SELECT * FROM transactions WHERE id = ?').get(r.lastInsertRowid);
-  });
-  const saved = tx();
-  broadcast('transaction', { ...saved, items });
-  res.json({ ...saved, items });
+app.post('/api/transactions', (req,res) => {
+  const { floor_id, total, method, items } = req.body;
+  if (!floor_id||!total||!method||!items?.length) return res.status(400).json({ error:'Fehlende Felder' });
+  const r = db.prepare('INSERT INTO transactions(floor_id,total,method,items_json) VALUES(?,?,?,?)').run(floor_id,total,method,JSON.stringify(items));
+  const saved = { ...db.prepare('SELECT * FROM transactions WHERE id=?').get(r.lastInsertRowid), items };
+  broadcast('transaction', saved);
+  res.json(saved);
 });
 
-app.get('/api/stats', (req, res) => {
-  res.json(db.prepare(`
+app.get('/api/stats', (req,res) => {
+  const where = req.query.floor ? "AND floor_id=?" : "";
+  const args  = req.query.floor ? [req.query.floor] : [];
+  const day = db.prepare(`
     SELECT COUNT(*) as count,
       COALESCE(SUM(total),0) as total,
       COALESCE(SUM(CASE WHEN method='Bargeld' THEN total ELSE 0 END),0) as cash,
-      COALESCE(SUM(CASE WHEN method='Karte' THEN total ELSE 0 END),0) as card
-    FROM transactions WHERE date(created_at) = date('now','localtime')
-  `).get());
+      COALESCE(SUM(CASE WHEN method='PayPal'  THEN total ELSE 0 END),0) as paypal
+    FROM transactions WHERE date(created_at)=date('now','localtime') ${where}
+  `).get(...args);
+  res.json(day);
 });
 
-app.delete('/api/transactions/today', (req, res) => {
+// Per-product stats for today
+app.get('/api/stats/products', (req,res) => {
+  const rows = db.prepare(`SELECT items_json FROM transactions WHERE date(created_at)=date('now','localtime')`).all();
+  const counts = {};
+  rows.forEach(r => {
+    JSON.parse(r.items_json).forEach(item => {
+      if (!counts[item.id]) counts[item.id] = { id:item.id, name:item.name, icon:item.icon, qty:0, revenue:0 };
+      counts[item.id].qty     += item.qty;
+      counts[item.id].revenue += item.qty * item.price;
+    });
+  });
+  res.json(Object.values(counts).sort((a,b)=>b.qty-a.qty));
+});
+
+app.delete('/api/transactions/today', (req,res) => {
   const { pin } = req.body;
-  if (pin !== getSetting('kassierer_pin', '1234'))
-    return res.status(403).json({ error: 'Falscher PIN' });
-  db.prepare("DELETE FROM transaction_items WHERE transaction_id IN (SELECT id FROM transactions WHERE date(created_at) = date('now','localtime'))").run();
-  db.prepare("DELETE FROM transactions WHERE date(created_at) = date('now','localtime')").run();
+  if (pin !== getSetting('kassierer_pin','1234')) return res.status(403).json({ error:'Falscher PIN' });
+  db.prepare("DELETE FROM transactions WHERE date(created_at)=date('now','localtime')").run();
   broadcast('reset', {});
-  res.json({ ok: true });
+  res.json({ ok:true });
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('*', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
-server.listen(PORT, () => console.log(`Kassensystem läuft auf Port ${PORT}`));
+server.listen(PORT, () => console.log(`🧾 Kassensystem läuft auf Port ${PORT}`));
