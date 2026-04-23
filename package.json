@@ -1,7 +1,6 @@
 {
   "name": "kassensystem",
   "version": "1.0.0",
-  "description": "Multi-Floor Kassensystem – Party & Flohmarkt",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
