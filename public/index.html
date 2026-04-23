@@ -5,343 +5,887 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
 <title>Kassensystem</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── THEME (warm beige like screenshot) ── */
 :root {
-  --bg: #fff; --bg2: #f5f4f1; --bg3: #eeedea;
-  --text: #1a1a1a; --text2: #666; --text3: #aaa;
-  --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.2);
-  --r: 10px; --r2: 14px;
-  --ok-bg: #d1fae5; --ok: #065f46;
-  --err-bg: #fee2e2; --err: #991b1b;
-  --floor-color: #b45309; --floor-light: #fef3c7;
+  --bg-app:    #2c2416;
+  --bg-nav:    #1e1810;
+  --bg-main:   #f5ede0;
+  --bg-card:   #fdf6ee;
+  --bg-right:  #f0e8d8;
+  --bg-numpad: #e8dece;
+  --bg-btn:    #ddd0bc;
+  --text:      #1a1208;
+  --text2:     #6b5a3e;
+  --text3:     #a0896a;
+  --border:    rgba(120,90,50,0.18);
+  --border2:   rgba(120,90,50,0.32);
+  --accent:    #c8860a;
+  --accent2:   #e8a020;
+  --red:       #c0392b;
+  --red-bg:    #fdecea;
+  --green:     #1a7a3a;
+  --green-bg:  #e8f5ec;
+  --nav-active:#3d2f18;
+  --floor-k:   #c8860a;
+  --floor-e:   #6d28d9;
+  --shadow:    0 2px 8px rgba(0,0,0,0.12);
+  --r: 8px; --r2: 12px;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
-    --text: #f0efe9; --text2: #9e9d97; --text3: #5a5a55;
-    --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.2);
-    --ok-bg: #052e16; --ok: #4ade80;
-    --err-bg: #450a0a; --err: #f87171;
-  }
-}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #111; color: var(--text);
-  height: 100vh; overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ── NAV ── */
-nav {
-  height: 48px; background: #111; border-bottom: 1px solid #222;
-  display: flex; align-items: center; gap: 6px; padding: 0 12px;
-  overflow-x: auto; flex-shrink: 0;
-}
-nav::-webkit-scrollbar { display: none; }
-.nav-logo { color: #fff; font-size: 18px; margin-right: 4px; flex-shrink: 0; }
-.nav-btn {
-  height: 32px; padding: 0 14px; border-radius: 16px; border: none;
-  background: rgba(255,255,255,0.1); color: #fff;
-  font-size: 13px; font-family: inherit; cursor: pointer;
-  display: flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap;
-}
-.nav-btn.active { font-weight: 700; }
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-.badge {
-  background: #ef4444; color: #fff; border-radius: 50%;
-  width: 17px; height: 17px; font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.conn { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: background .3s; }
-.conn.ok  { background: #4ade80; }
-.conn.err { background: #f87171; }
-
-/* ── LAYOUT ── */
-.screen { display: none; flex: 1; overflow: hidden; }
-.screen.active { display: flex; }
-.full { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-
-/* ── POS: 2 columns ── */
-#pos { flex-direction: row; }
-
-/* LEFT */
-.pos-left {
-  display: flex; flex-direction: column; overflow: hidden;
-  background: var(--bg); flex: 1; border-right: 0.5px solid var(--border);
-}
-.floor-header {
-  padding: 9px 14px; display: flex; align-items: center; gap: 8px;
-  border-bottom: 0.5px solid var(--border); flex-shrink: 0;
-  background: var(--floor-light);
-}
-.floor-header-icon { font-size: 20px; }
-.floor-header-name { font-size: 14px; font-weight: 700; color: var(--floor-color); }
-.cat-bar {
-  display: flex; gap: 5px; padding: 8px 12px; flex-wrap: wrap;
-  border-bottom: 0.5px solid var(--border); flex-shrink: 0;
-}
-.cat-pill {
-  padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2);
-  background: transparent; color: var(--text2);
-  font-size: 12px; cursor: pointer; font-family: inherit;
-}
-.cat-pill.active { color: #fff; font-weight: 600; }
-.prod-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-  gap: 8px; padding: 12px; overflow-y: auto; flex: 1; align-content: start;
-}
-.prod-card {
-  background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px;
-  padding: 13px 8px 10px; cursor: pointer; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  font-family: inherit; box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  transition: transform .1s;
-}
-.prod-card:active { transform: scale(.91); }
-.prod-icon  { font-size: 38px; line-height: 1; }
-.prod-name  { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
-.prod-price {
-  font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 9px;
-  background: var(--floor-light); color: var(--floor-color);
-}
-
-/* RIGHT */
-.pos-right {
-  width: 310px; flex-shrink: 0;
-  display: flex; flex-direction: column; background: var(--bg2);
-  overflow: hidden;
-}
-.cart-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 12px; flex-shrink: 0;
-}
-.cart-title { font-size: 13px; font-weight: 700; }
-.cart-clear { background: none; border: none; font-size: 11px; color: var(--text3); cursor: pointer; font-family: inherit; }
-.cart-list  { flex: 1; overflow-y: auto; padding: 4px 12px; min-height: 0; }
-.cart-empty { color: var(--text3); font-size: 12px; text-align: center; padding-top: 24px; }
-.cart-row {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 0; border-bottom: 0.5px solid var(--border);
-}
-.cart-row-icon { font-size: 17px; }
-.cart-row-name {
-  flex: 1; font-size: 12px; font-weight: 500;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.qty-btn {
-  width: 22px; height: 22px; border-radius: 50%;
-  border: 0.5px solid var(--border2); background: var(--bg);
-  cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-app);
   color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
-.qty-num  { font-size: 13px; font-weight: 700; min-width: 16px; text-align: center; }
-.cart-row-sub { font-size: 11px; color: var(--text3); min-width: 44px; text-align: right; }
 
-/* Totals */
-.total-block { padding: 8px 12px 6px; border-top: 0.5px solid var(--border); flex-shrink: 0; }
-.total-tax  { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 2px; }
-.total-main { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; }
-
-/* Method buttons */
-.method-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 12px 4px; flex-shrink: 0; }
-.method-btn {
-  padding: 11px 4px; border-radius: 10px; border: none;
-  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+/* ── TOP NAV ── */
+.topnav {
+  height: 44px;
+  background: var(--bg-nav);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.4);
+}
+.floor-tab {
+  height: 30px;
+  padding: 0 16px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
   transition: all .15s;
 }
+.floor-tab.active {
+  background: var(--nav-active);
+  color: #fff;
+  font-weight: 700;
+  border-bottom: 2px solid var(--accent2);
+}
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-icon-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .15s;
+}
+.nav-icon-btn:hover { background: rgba(255,255,255,0.15); }
+.conn-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #555;
+  margin-left: 4px;
+  transition: background .3s;
+}
+.conn-dot.ok  { background: #4ade80; }
+.conn-dot.err { background: #f87171; }
 
-/* Inline payment panel */
-.pay-panel { flex-shrink: 0; background: var(--bg); border-top: 0.5px solid var(--border); padding: 10px 12px; overflow-y: auto; }
-.bills-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
-.bill-btn {
-  padding: 8px 2px; border-radius: 8px; cursor: pointer; font-family: inherit;
-  font-weight: 700; font-size: 15px; border: 1.5px solid #e5c97e;
-  background: #fffbf0; color: #92400e;
+/* ── MAIN LAYOUT ── */
+.app-body {
+  height: calc(100vh - 44px);
+  display: flex;
+  overflow: hidden;
 }
-.bill-btn.selected { border-color: #b45309; background: #fef3c7; }
-.paypal-info {
-  background: #e8f0fe; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 8px;
+
+/* ── LEFT: product area ── */
+.left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-main);
+  overflow: hidden;
 }
-.given-row {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg2); border-radius: 8px; border: 0.5px solid var(--border);
-  padding: 6px 10px; margin-bottom: 6px;
+
+/* Floor header bar */
+.floor-header {
+  padding: 8px 14px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-main);
 }
-.given-label { font-size: 12px; color: var(--text3); }
-.given-val   { font-size: 20px; font-weight: 700; }
-.change-box  { padding: 6px 12px; border-radius: 8px; margin-bottom: 6px; text-align: center; font-weight: 700; font-size: 14px; }
-.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 8px; }
+.floor-header-icon { font-size: 22px; }
+.floor-header-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* Category pills */
+.cat-bar {
+  display: flex;
+  gap: 5px;
+  padding: 6px 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-main);
+}
+.cat-pill {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: var(--bg-btn);
+  color: var(--text2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all .12s;
+}
+.cat-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Product grid */
+.prod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  flex: 1;
+  align-content: start;
+}
+.prod-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform .1s, box-shadow .1s;
+  font-family: inherit;
+}
+.prod-card:active {
+  transform: scale(.93);
+  box-shadow: none;
+}
+.prod-card-img {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  background: var(--bg-card);
+  padding: 8px 4px 4px;
+  line-height: 1;
+}
+.prod-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 3px 6px 0;
+  line-height: 1.2;
+}
+.prod-card-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  padding: 2px 6px 7px;
+}
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  width: 290px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-right);
+  border-left: 1px solid var(--border2);
+  overflow: hidden;
+}
+
+/* Cart */
+.cart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+}
+.cart-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.cart-clear {
+  font-size: 11px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.cart-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px;
+  min-height: 0;
+}
+.cart-empty { color: var(--text3); font-size: 12px; text-align: center; padding: 20px 0; }
+.cart-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cart-row-icon { font-size: 16px; flex-shrink: 0; }
+.cart-row-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.qty-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: var(--bg-btn);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  flex-shrink: 0;
+  font-family: inherit;
+}
+.qty-num { font-size: 13px; font-weight: 800; min-width: 18px; text-align: center; color: var(--text); }
+.cart-sub { font-size: 11px; color: var(--text3); min-width: 44px; text-align: right; flex-shrink: 0; }
+
+/* Totals block */
+.total-block {
+  padding: 6px 12px 4px;
+  border-top: 1px solid var(--border2);
+  flex-shrink: 0;
+  background: var(--bg-right);
+}
+.total-tax {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 1px;
+}
+.total-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+}
+.total-main-val {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+/* ── PAYMENT AREA ── */
+.pay-area {
+  flex-shrink: 0;
+  background: var(--bg-numpad);
+  border-top: 1px solid var(--border2);
+  padding: 8px 10px;
+}
+
+/* Given / Rückgeld row */
+.given-ruckgeld {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.gr-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 5px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gr-label { font-size: 10px; color: var(--text3); font-weight: 600; }
+.gr-val   { font-size: 14px; font-weight: 800; color: var(--text); }
+
+/* Main numpad + bills grid */
+.numpad-bills {
+  display: grid;
+  grid-template-columns: 1fr 56px;
+  gap: 5px;
+}
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
 .np-btn {
-  padding: 12px 6px; border-radius: 9px; border: 0.5px solid var(--border);
-  background: var(--bg); font-size: 18px; font-weight: 600;
-  cursor: pointer; font-family: inherit; color: var(--text);
+  height: 40px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg-card);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all .08s;
 }
-.np-del { background: var(--bg3); font-size: 15px; color: var(--text2); }
-.confirm-btn {
-  width: 100%; padding: 13px; border-radius: 10px; border: none;
-  color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit;
+.np-btn:active { transform: scale(.93); background: var(--bg-btn); }
+.np-btn.np-dot { font-size: 22px; }
+.np-btn.np-del { font-size: 16px; background: var(--bg-btn); }
+
+/* Bill buttons (right column) */
+.bills-col {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 4px;
 }
-.confirm-btn:disabled { background: #aaa !important; opacity: .5; cursor: not-allowed; }
+.bill-btn {
+  border-radius: var(--r);
+  border: 1px solid #c8a040;
+  background: #fef8e0;
+  color: #7a5800;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all .08s;
+}
+.bill-btn:active { transform: scale(.93); }
+.bill-btn.selected {
+  background: #c8860a;
+  border-color: #a06800;
+  color: #fff;
+}
+
+/* Pay buttons */
+.pay-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 5px;
+}
+.pay-btn {
+  height: 46px;
+  border-radius: var(--r);
+  border: none;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--shadow);
+  transition: all .1s;
+}
+.pay-btn:active { transform: scale(.96); }
+.pay-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.pay-btn.cash   { background: #b45309; color: #fff; }
+.pay-btn.paypal { background: #003087; color: #fff; }
+.pay-btn.active-method { box-shadow: 0 0 0 3px rgba(200,134,10,0.6); }
+
+/* Change indicator */
+.change-row {
+  background: var(--green-bg);
+  border: 1px solid #a0d8b0;
+  border-radius: var(--r);
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.change-row.over {
+  background: var(--red-bg);
+  border-color: #f5b0aa;
+}
+.change-label { font-size: 11px; font-weight: 700; color: var(--text2); }
+.change-val   { font-size: 16px; font-weight: 900; }
+.change-row .change-val { color: var(--green); }
+.change-row.over .change-val { color: var(--red); }
+
+/* ── SCREENS ── */
+.screen { display: none; height: calc(100vh - 44px); }
+.screen.active { display: flex; }
 
 /* ── STATS ── */
-.stats-wrap { flex: 1; overflow-y: auto; padding: 14px 16px; background: var(--bg); }
-.stat-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-.stat-tab {
-  padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2);
-  background: transparent; color: var(--text2);
-  font-size: 12px; cursor: pointer; font-family: inherit;
+.stats-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  background: var(--bg-main);
 }
-.stat-tab.active { background: var(--text); color: var(--bg); font-weight: 700; }
-.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-.kpi { background: var(--bg2); border-radius: 10px; padding: 12px 14px; }
-.kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
-.kpi-val   { font-size: 20px; font-weight: 800; }
-.kpi-sub   { font-size: 11px; color: var(--text3); margin-top: 2px; }
-.chart-box { background: var(--bg2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
-.chart-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
-.mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 52px; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.kpi-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 600; }
+.kpi-val   { font-size: 22px; font-weight: 900; color: var(--text); }
+.kpi-sub   { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
 .mc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .mc-bar { width: 100%; border-radius: 3px 3px 0 0; transition: height .4s; }
 .mc-lbl { font-size: 9px; color: var(--text3); white-space: nowrap; }
-.sec-head { font-size: 12px; font-weight: 700; color: var(--text2); margin: 14px 0 8px; }
-.floor-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
-.floor-row-left { display: flex; align-items: center; gap: 8px; }
-.ranking-box { background: var(--bg2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
-.rank-item { margin-bottom: 10px; }
-.rank-item:last-child { margin-bottom: 0; }
-.rank-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-.rank-left { display: flex; align-items: center; gap: 6px; }
-.rank-n { font-size: 11px; color: var(--text3); font-weight: 700; min-width: 18px; }
-.rank-bar-bg { height: 5px; background: rgba(0,0,0,.08); border-radius: 3px; overflow: hidden; }
-.rank-bar { height: 100%; border-radius: 3px; transition: width .5s; }
-.prod-chart-box { background: var(--bg2); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
-.prod-chart-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-.reset-btn {
-  width: 100%; padding: 10px; border-radius: 10px;
-  border: 0.5px solid var(--err); background: none; color: var(--err);
-  font-size: 13px; cursor: pointer; font-family: inherit; margin-top: 16px;
+.sec-head {
+  font-size: 12px; font-weight: 800; color: var(--text2);
+  margin: 14px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
 }
-.reset-btn:hover { background: var(--err-bg); }
+.floor-stat-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow);
+}
+.ranking-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.rank-row { margin-bottom: 10px; }
+.rank-row:last-child { margin-bottom: 0; }
+.rank-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.rank-left { display: flex; align-items: center; gap: 7px; }
+.rank-n { font-size: 11px; color: var(--text3); font-weight: 700; min-width: 20px; }
+.rank-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rank-bar { height: 100%; border-radius: 3px; transition: width .6s; }
+.prod-chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+.reset-btn-stat {
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px;
+  border-radius: var(--r);
+  border: 1px solid var(--red);
+  background: none;
+  color: var(--red);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 600;
+}
+.reset-btn-stat:hover { background: var(--red-bg); }
 
 /* ── ADMIN ── */
-.admin-wrap { flex: 1; overflow-y: auto; padding: 14px 16px; background: var(--bg); }
-.admin-section { margin-bottom: 24px; }
-.admin-section-title {
-  font-size: 13px; font-weight: 700; color: var(--text2);
-  padding-bottom: 6px; border-bottom: 0.5px solid var(--border); margin-bottom: 10px;
+.admin-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  background: var(--bg-main);
+}
+.admin-sec { margin-bottom: 24px; }
+.admin-sec-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 12px;
 }
 .admin-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-.admin-form input, .admin-form select {
-  font-family: inherit; font-size: 13px; padding: 7px 10px;
-  border-radius: var(--r); border: 0.5px solid var(--border2);
-  background: var(--bg); color: var(--text); outline: none;
+.admin-form input,
+.admin-form select {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
 }
-.admin-form input.wide { flex: 1; min-width: 120px; }
-.admin-form input.narrow { width: 80px; }
-.admin-form input.icon-f { width: 52px; }
-.admin-add { padding: 7px 14px; border-radius: var(--r); border: none; background: var(--text); color: var(--bg); cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 600; }
+.admin-form input.w   { flex: 1; min-width: 110px; }
+.admin-form input.n   { width: 80px; }
+.admin-form input.ico { width: 52px; }
+.admin-add {
+  padding: 8px 16px;
+  border-radius: var(--r);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tbl th { text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 600; color: var(--text3); border-bottom: 0.5px solid var(--border); }
-.tbl td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); }
-.tbl-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 18px; line-height: 1; }
-.tbl-del:hover { color: var(--err); }
-.cat-tag { background: var(--bg2); padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-.settings-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-.settings-row label { font-size: 12px; color: var(--text2); min-width: 120px; flex-shrink: 0; }
-.settings-row input { flex: 1; min-width: 100px; font-family: inherit; font-size: 13px; padding: 6px 10px; border-radius: var(--r); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); }
-.settings-row button { padding: 6px 14px; border-radius: var(--r); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); cursor: pointer; font-size: 12px; font-family: inherit; }
+.tbl th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border2);
+  background: var(--bg-card);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.tbl-del {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  font-family: inherit;
+}
+.tbl-del:hover { color: var(--red); }
+.cat-tag {
+  background: var(--bg-numpad);
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.settings-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.settings-row label {
+  font-size: 12px;
+  color: var(--text2);
+  min-width: 130px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.settings-row input {
+  flex: 1;
+  min-width: 100px;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg-card);
+  color: var(--text);
+  outline: none;
+}
+.settings-save {
+  padding: 7px 16px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg-numpad);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+}
 
-/* ── MODALS ── */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; align-items: center; justify-content: center; }
+/* ── PIN OVERLAY ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+}
 .overlay.show { display: flex; }
-/* PIN */
-.pin-box { background: var(--bg); border-radius: var(--r2); padding: 24px; width: 280px; text-align: center; }
-.pin-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-.pin-box p  { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
-.pin-dots { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
-.pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border2); }
-.pin-dot.on { background: var(--text); border-color: var(--text); }
-.pin-err  { font-size: 12px; color: var(--err); min-height: 18px; margin-bottom: 8px; }
-.pin-pad  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.pin-btn  { padding: 16px 8px; border-radius: var(--r); border: 0.5px solid var(--border); background: var(--bg2); cursor: pointer; font-size: 20px; font-weight: 600; font-family: inherit; color: var(--text); }
-.pin-btn.sm { font-size: 14px; background: var(--bg3); }
-/* Admin modal */
-.admin-box { background: var(--bg); border-radius: var(--r2); padding: 24px; width: 300px; }
-.admin-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.admin-box p  { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
-.modal-input { width: 100%; font-family: inherit; font-size: 15px; padding: 10px 12px; border-radius: var(--r); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); margin-bottom: 6px; outline: none; }
-.modal-err   { font-size: 12px; color: var(--err); min-height: 16px; margin-bottom: 8px; }
-.modal-btns  { display: flex; gap: 8px; }
-.modal-btn   { flex: 1; padding: 11px; border-radius: var(--r); border: 0.5px solid var(--border2); background: none; cursor: pointer; font-size: 14px; font-family: inherit; color: var(--text); }
-.modal-btn.ok { background: var(--text); color: var(--bg); border-color: var(--text); }
+.pin-box {
+  background: var(--bg-card);
+  border-radius: var(--r2);
+  padding: 28px 24px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.pin-box h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.pin-box p  { font-size: 13px; color: var(--text3); margin-bottom: 16px; }
+.pin-dots   { display: flex; gap: 12px; justify-content: center; margin-bottom: 8px; }
+.pin-dot    { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border2); }
+.pin-dot.on { background: var(--accent); border-color: var(--accent); }
+.pin-err    { font-size: 12px; color: var(--red); min-height: 18px; margin-bottom: 10px; }
+.pin-pad    { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pin-btn {
+  padding: 16px 8px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  background: var(--bg-numpad);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text);
+  transition: all .08s;
+}
+.pin-btn:active { background: var(--bg-btn); }
+.pin-btn.sm { font-size: 14px; }
+
+/* ADMIN MODAL */
+.admin-box {
+  background: var(--bg-card);
+  border-radius: var(--r2);
+  padding: 28px 24px;
+  width: 320px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.admin-box h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.admin-box p  { font-size: 13px; color: var(--text3); margin-bottom: 14px; }
+.modal-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 11px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--bg-main);
+  color: var(--text);
+  margin-bottom: 8px;
+  outline: none;
+}
+.modal-err { font-size: 12px; color: var(--red); min-height: 18px; margin-bottom: 10px; }
+.modal-btns { display: flex; gap: 8px; }
+.modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  font-weight: 600;
+}
+.modal-btn.ok {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 
 /* TOAST */
 .toast {
-  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(80px);
-  background: var(--text); color: var(--bg); padding: 10px 22px; border-radius: 20px;
-  font-size: 13px; font-weight: 600; z-index: 500; transition: transform .25s;
-  pointer-events: none; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1a1208;
+  color: #fff;
+  padding: 11px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 600;
+  transition: transform .25s;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0,0,0,.4);
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Scrollbar style */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav id="nav">
-  <span class="nav-logo">🧾</span>
-  <button class="nav-btn active" id="nav-keller" onclick="switchFloor('keller'); showScreen('pos')">🍺 Kellerbar</button>
-  <button class="nav-btn"        id="nav-erd"    onclick="switchFloor('erd');    showScreen('pos')">🥂 Erdgeschossbar</button>
+<!-- TOP NAV -->
+<nav class="topnav" id="topnav">
+  <button class="floor-tab active" id="tab-keller" onclick="switchFloor('keller');showScreen('pos')">
+    🍺 Kellerbar
+  </button>
+  <button class="floor-tab" id="tab-erd" onclick="switchFloor('erd');showScreen('pos')">
+    🥂 Erdgeschossbar
+  </button>
   <div class="nav-right">
-    <button class="nav-btn" id="nav-stats" onclick="requirePin(function(){ showScreen('stats'); })">📊 Statistik</button>
-    <button class="nav-btn" id="nav-admin" onclick="requireAdmin()">⚙️ Admin</button>
-    <div class="conn" id="conn"></div>
+    <button class="nav-icon-btn" onclick="requirePin(function(){ showScreen('stats'); })">
+      📊 Statistik
+    </button>
+    <button class="nav-icon-btn" onclick="requireAdmin()">
+      ⚙️ Admin
+    </button>
+    <div class="conn-dot" id="conn-dot"></div>
   </div>
 </nav>
 
 <!-- POS SCREEN -->
-<div class="screen active" id="pos" style="height: calc(100vh - 48px);">
-  <!-- LEFT -->
-  <div class="pos-left">
-    <div class="floor-header">
-      <span class="floor-header-icon" id="fh-icon">🍺</span>
-      <span class="floor-header-name" id="fh-name">Kellerbar</span>
-    </div>
-    <div class="cat-bar" id="cat-bar"></div>
-    <div class="prod-grid" id="prod-grid"></div>
-  </div>
+<div class="screen active" id="screen-pos">
+  <div class="app-body" style="width:100%">
 
-  <!-- RIGHT -->
-  <div class="pos-right">
-    <div class="cart-head">
-      <span class="cart-title">Warenkorb <span id="cart-cnt" style="display:none;background:var(--floor-color);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;"></span></span>
-      <button class="cart-clear" onclick="clearCart()">Leeren</button>
+    <!-- LEFT -->
+    <div class="left-panel">
+      <div class="floor-header">
+        <span class="floor-header-icon" id="fh-icon">🍺</span>
+        <span class="floor-header-name" id="fh-name">Kellerbar</span>
+      </div>
+      <div class="cat-bar" id="cat-bar"></div>
+      <div class="prod-grid" id="prod-grid">
+        <p style="color:var(--text3);padding:20px;font-size:13px;">Laden…</p>
+      </div>
     </div>
-    <div class="cart-list" id="cart-list"><p class="cart-empty">Noch keine Artikel</p></div>
-    <div class="total-block">
-      <div class="total-tax" id="total-tax">inkl. 19% MwSt: 0,00 €</div>
-      <div class="total-main"><span>Gesamt</span><span id="total-val" style="color:var(--floor-color)">0,00 €</span></div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <!-- Cart -->
+      <div class="cart-head">
+        <span class="cart-title">Warenkorb</span>
+        <button class="cart-clear" onclick="clearCart()">Leeren</button>
+      </div>
+      <div class="cart-list" id="cart-list">
+        <p class="cart-empty">Noch keine Artikel</p>
+      </div>
+
+      <!-- Totals -->
+      <div class="total-block">
+        <div class="total-tax" id="total-tax">inkl. 19% MwSt: 0,00 €</div>
+        <div class="total-main">
+          <span>Gesamt:</span>
+          <span class="total-main-val" id="total-val">0,00 €</span>
+        </div>
+      </div>
+
+      <!-- Payment area -->
+      <div class="pay-area">
+        <!-- Given / Rückgeld -->
+        <div class="given-ruckgeld">
+          <div class="gr-box">
+            <span class="gr-label">Gegeben —</span>
+            <span class="gr-val" id="given-val">0,00 €</span>
+          </div>
+          <div class="gr-box">
+            <span class="gr-label">Rückgeld</span>
+            <span class="gr-val" id="change-val">0,00 €</span>
+          </div>
+        </div>
+
+        <!-- Numpad + Bills -->
+        <div class="numpad-bills">
+          <div class="numpad">
+            <button class="np-btn" onclick="npKey('1')">1</button>
+            <button class="np-btn" onclick="npKey('2')">2</button>
+            <button class="np-btn" onclick="npKey('3')">3</button>
+            <button class="np-btn" onclick="npKey('4')">4</button>
+            <button class="np-btn" onclick="npKey('5')">5</button>
+            <button class="np-btn" onclick="npKey('6')">6</button>
+            <button class="np-btn" onclick="npKey('7')">7</button>
+            <button class="np-btn" onclick="npKey('8')">8</button>
+            <button class="np-btn" onclick="npKey('9')">9</button>
+            <button class="np-btn np-dot" onclick="npKey('.')">.</button>
+            <button class="np-btn" onclick="npKey('0')">0</button>
+            <button class="np-btn np-del" onclick="npDel()">⌫</button>
+          </div>
+          <div class="bills-col">
+            <button class="bill-btn" id="bill-5"  onclick="setBill(5)">5 €</button>
+            <button class="bill-btn" id="bill-10" onclick="setBill(10)">10 €</button>
+            <button class="bill-btn" id="bill-20" onclick="setBill(20)">20 €</button>
+            <button class="bill-btn" id="bill-50" onclick="setBill(50)">50 €</button>
+          </div>
+        </div>
+
+        <!-- Pay buttons -->
+        <div class="pay-btn-row">
+          <button class="pay-btn cash"   id="btn-cash"   onclick="pay('Bargeld')" disabled>💵 Bargeld</button>
+          <button class="pay-btn paypal" id="btn-paypal" onclick="pay('PayPal')"  disabled>🅿️ PayPal</button>
+        </div>
+      </div>
     </div>
-    <div class="method-row">
-      <button class="method-btn" id="btn-cash"   onclick="toggleMethod('Bargeld')" style="background:rgba(0,0,0,0.07);color:var(--text)">💵 Bargeld</button>
-      <button class="method-btn" id="btn-paypal" onclick="toggleMethod('PayPal')"  style="background:rgba(0,0,0,0.07);color:var(--text)">🅿️ PayPal</button>
-    </div>
-    <div class="pay-panel" id="pay-panel" style="display:none"></div>
+
   </div>
 </div>
 
 <!-- STATS SCREEN -->
-<div class="screen" id="stats" style="height: calc(100vh - 48px);">
-  <div class="full">
-    <div class="stats-wrap" id="stats-wrap"></div>
+<div class="screen" id="screen-stats">
+  <div class="stats-wrap" id="stats-wrap">
+    <p style="color:var(--text3);padding:20px;font-size:13px">Laden…</p>
   </div>
 </div>
 
 <!-- ADMIN SCREEN -->
-<div class="screen" id="admin" style="height: calc(100vh - 48px);">
-  <div class="full">
-    <div class="admin-wrap" id="admin-wrap"></div>
+<div class="screen" id="screen-admin">
+  <div class="admin-wrap" id="admin-wrap">
+    <p style="color:var(--text3);padding:20px;font-size:13px">Laden…</p>
   </div>
 </div>
 
@@ -351,7 +895,7 @@ nav::-webkit-scrollbar { display: none; }
     <h3>PIN eingeben</h3>
     <p>Kassierer-PIN erforderlich</p>
     <div class="pin-dots" id="pin-dots"></div>
-    <div class="pin-err"  id="pin-err"></div>
+    <div class="pin-err" id="pin-err"></div>
     <div class="pin-pad">
       <button class="pin-btn" onclick="pinKey('1')">1</button>
       <button class="pin-btn" onclick="pinKey('2')">2</button>
@@ -369,14 +913,14 @@ nav::-webkit-scrollbar { display: none; }
   </div>
 </div>
 
-<!-- ADMIN OVERLAY -->
+<!-- ADMIN PASSWORD OVERLAY -->
 <div class="overlay" id="admin-overlay">
   <div class="admin-box">
     <h3>Admin-Zugang</h3>
     <p>Bitte Admin-Passwort eingeben</p>
-    <input class="modal-input" type="password" id="admin-pw-input" placeholder="Passwort"
+    <input class="modal-input" type="password" id="admin-pw" placeholder="Passwort"
            onkeydown="if(event.key==='Enter') submitAdminPw()"/>
-    <div class="modal-err" id="admin-pw-err"></div>
+    <div class="modal-err" id="admin-err"></div>
     <div class="modal-btns">
       <button class="modal-btn"    onclick="closeAdminOverlay()">Abbrechen</button>
       <button class="modal-btn ok" onclick="submitAdminPw()">Weiter →</button>
@@ -387,21 +931,19 @@ nav::-webkit-scrollbar { display: none; }
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────
+// ── FLOORS ────────────────────────────────────────────────────
 const FLOORS = {
-  keller: { id:'keller', name:'Kellerbar',       emoji:'🍺', color:'#b45309', light:'#fef3c7' },
-  erd:    { id:'erd',    name:'Erdgeschossbar',   emoji:'🥂', color:'#6d28d9', light:'#ede9fe' },
+  keller: { id:'keller', name:'Kellerbar',     emoji:'🍺', color:'#c8860a' },
+  erd:    { id:'erd',    name:'Erdgeschossbar', emoji:'🥂', color:'#6d28d9' },
 };
-const BILLS  = [5, 10, 20, 50];
-const COLORS = ['#6d28d9','#b45309','#0e7490','#065f46','#9f1239','#1d4ed8','#d97706','#7c3aed'];
+const CHART_COLORS = ['#c8860a','#6d28d9','#0e7490','#065f46','#9f1239','#1d4ed8','#d97706'];
 
 // ── STATE ─────────────────────────────────────────────────────
-let products   = { keller: [], erd: [] };
-let carts      = { keller: [], erd: [] };
-let floor      = 'keller';
-let activeCat  = 'Alle';
-let payMethod  = null;   // null | 'Bargeld' | 'PayPal'
-let npRaw      = '';
+let products  = { keller:[], erd:[] };
+let carts     = { keller:[], erd:[] };
+let floor     = 'keller';
+let activeCat = 'Alle';
+let npRaw     = '';
 
 let pinUnlocked   = false;
 let adminUnlocked = false;
@@ -409,7 +951,7 @@ let adminPwCache  = '';
 let pinCb         = null;
 let pinVal        = '';
 
-// ── HELPERS ───────────────────────────────────────────────────
+// ── UTILS ─────────────────────────────────────────────────────
 const fmt = n => Number(n).toFixed(2).replace('.', ',') + ' €';
 
 function toast(msg) {
@@ -417,162 +959,138 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 2400);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
 function setConn(ok) {
-  const el = document.getElementById('conn');
-  el.className = 'conn ' + (ok ? 'ok' : 'err');
+  document.getElementById('conn-dot').className = 'conn-dot ' + (ok ? 'ok' : 'err');
 }
 
-async function apiFetch(url, opts = {}) {
+async function api(url, opts = {}) {
   try {
-    const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const r = await fetch(url, { headers:{'Content-Type':'application/json'}, ...opts });
     if (!r.ok) throw new Error(await r.text());
     setConn(true);
     return r.json();
-  } catch (e) { setConn(false); throw e; }
+  } catch(e) { setConn(false); throw e; }
 }
 
-// ── SCREEN SWITCHING ──────────────────────────────────────────
+// ── SCREENS ───────────────────────────────────────────────────
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const nb = document.getElementById('nav-' + name) || document.getElementById('nav-' + floor);
-  if (nb) nb.classList.add('active');
+  document.getElementById('screen-' + name).classList.add('active');
   if (name === 'stats') loadStats();
   if (name === 'admin') loadAdmin();
 }
 
-// ── FLOOR SWITCHING ───────────────────────────────────────────
+// ── FLOOR ─────────────────────────────────────────────────────
 function switchFloor(id) {
   floor     = id;
   activeCat = 'Alle';
-  payMethod = null;
   npRaw     = '';
-  const f   = FLOORS[id];
-  document.documentElement.style.setProperty('--floor-color', f.color);
-  document.documentElement.style.setProperty('--floor-light', f.light);
+
+  const f = FLOORS[id];
   document.getElementById('fh-icon').textContent = f.emoji;
   document.getElementById('fh-name').textContent = f.name;
-  document.getElementById('fh-name').style.color = f.color;
-  document.getElementById('floor-header')?.style && (document.querySelector('.floor-header').style.background = f.light);
 
-  // Update nav button colors
+  // Nav tabs
   Object.keys(FLOORS).forEach(fid => {
-    const btn = document.getElementById('nav-' + fid);
-    if (!btn) return;
-    btn.style.background = fid === id ? f.color : 'rgba(255,255,255,0.1)';
-    btn.classList.toggle('active', fid === id);
+    document.getElementById('tab-' + fid)?.classList.toggle('active', fid === id);
   });
 
   renderCats();
   renderProducts();
   renderCart();
-  renderPayPanel();
+  updateNumpadDisplay();
 }
 
-// ── LOAD PRODUCTS ─────────────────────────────────────────────
+// ── PRODUCTS ──────────────────────────────────────────────────
 async function loadProducts(floorId) {
   try {
-    const data = await apiFetch('/api/products?floor=' + floorId);
-    products[floorId] = data;
+    products[floorId] = await api('/api/products?floor=' + floorId);
     if (floor === floorId) { renderCats(); renderProducts(); }
-  } catch (e) { console.error(e); }
+  } catch(e) { console.error('Produkte laden:', e); }
 }
 
 async function loadAllProducts() {
   await Promise.all(Object.keys(FLOORS).map(id => loadProducts(id)));
 }
 
-// ── CATEGORIES ────────────────────────────────────────────────
 function renderCats() {
-  const cats = ['Alle', ...new Set((products[floor] || []).map(p => p.category))];
-  const f = FLOORS[floor];
+  const cats = ['Alle', ...new Set((products[floor]||[]).map(p => p.category))];
   document.getElementById('cat-bar').innerHTML = cats.map(c => `
     <button class="cat-pill ${c === activeCat ? 'active' : ''}"
-      style="${c === activeCat ? `background:${f.color};border-color:${f.color}` : ''}"
-      onclick="setCat(this, '${c.replace(/'/g,"\\'")}')">
-      ${c}
-    </button>
+      onclick="setCat(this, '${c.replace(/'/g,"\\'")}')">${c}</button>
   `).join('');
 }
 
 function setCat(btn, c) {
   activeCat = c;
   document.querySelectorAll('.cat-pill').forEach(b => {
-    const active = b === btn;
-    b.classList.toggle('active', active);
-    b.style.background   = active ? FLOORS[floor].color : '';
-    b.style.borderColor  = active ? FLOORS[floor].color : '';
-    b.style.color        = active ? '#fff' : '';
+    const on = b === btn;
+    b.classList.toggle('active', on);
   });
   renderProducts();
 }
 
-// ── PRODUCTS GRID ─────────────────────────────────────────────
 function renderProducts() {
-  const f    = FLOORS[floor];
-  const list = (products[floor] || []).filter(p => activeCat === 'Alle' || p.category === activeCat);
+  const list = (products[floor]||[]).filter(p => activeCat === 'Alle' || p.category === activeCat);
   const grid = document.getElementById('prod-grid');
   if (!list.length) {
-    grid.innerHTML = '<p style="color:var(--text3);padding:20px;font-size:13px;">Keine Produkte</p>';
+    grid.innerHTML = '<p style="color:var(--text3);padding:20px;font-size:13px">Keine Produkte</p>';
     return;
   }
   grid.innerHTML = list.map(p => `
     <button class="prod-card" onclick="addToCart(${p.id})">
-      <span class="prod-icon">${p.icon}</span>
-      <span class="prod-name">${p.name}</span>
-      <span class="prod-price">${fmt(p.price)}</span>
+      <div class="prod-card-img">${p.icon}</div>
+      <div class="prod-card-name">${p.name}</div>
+      <div class="prod-card-price">${fmt(p.price)}</div>
     </button>
   `).join('');
 }
 
 // ── CART ──────────────────────────────────────────────────────
-function getTotal() { return (carts[floor] || []).reduce((s, i) => s + i.price * i.qty, 0); }
-
-function addToCart(id) {
-  const p = (products[floor] || []).find(x => x.id === id);
-  if (!p) return;
-  const cart = carts[floor];
-  const ex   = cart.find(x => x.id === id);
-  if (ex) ex.qty++;
-  else cart.push({ ...p, qty: 1 });
-  renderCart();
+function getTotal() {
+  return (carts[floor]||[]).reduce((s,i) => s + i.price * i.qty, 0);
 }
 
-function changeQty(id, delta) {
-  const cart = carts[floor];
-  const i    = cart.findIndex(x => x.id === id);
-  if (i < 0) return;
-  cart[i].qty += delta;
-  if (cart[i].qty <= 0) cart.splice(i, 1);
+function addToCart(id) {
+  const p = (products[floor]||[]).find(x => x.id === id);
+  if (!p) return;
+  const c  = carts[floor];
+  const ex = c.find(x => x.id === id);
+  if (ex) ex.qty++; else c.push({...p, qty:1});
   renderCart();
-  renderPayPanel();
+  updateNumpadDisplay();
+}
+
+function changeQty(id, d) {
+  const c = carts[floor];
+  const i = c.findIndex(x => x.id === id);
+  if (i < 0) return;
+  c[i].qty += d;
+  if (c[i].qty <= 0) c.splice(i, 1);
+  renderCart();
+  updateNumpadDisplay();
 }
 
 function clearCart() {
   carts[floor] = [];
-  payMethod = null;
   npRaw = '';
   renderCart();
-  renderPayPanel();
+  updateNumpadDisplay();
 }
 
 function renderCart() {
-  const cart  = carts[floor] || [];
+  const cart  = carts[floor]||[];
   const total = getTotal();
   const tax   = total - total / 1.19;
-  const cnt   = cart.reduce((s, i) => s + i.qty, 0);
-  const cntEl = document.getElementById('cart-cnt');
-  cntEl.textContent   = cnt;
-  cntEl.style.display = cnt > 0 ? 'inline' : 'none';
-  cntEl.style.background = FLOORS[floor].color;
+  const has   = cart.length > 0;
 
-  document.getElementById('total-val').textContent  = fmt(total);
-  document.getElementById('total-val').style.color  = FLOORS[floor].color;
-  document.getElementById('total-tax').textContent  = 'inkl. 19% MwSt: ' + fmt(tax);
+  document.getElementById('total-val').textContent = fmt(total);
+  document.getElementById('total-tax').textContent = 'inkl. 19% MwSt: ' + fmt(tax);
+  document.getElementById('btn-cash').disabled   = !has;
+  document.getElementById('btn-paypal').disabled = !has;
 
   const listEl = document.getElementById('cart-list');
   if (!cart.length) {
@@ -583,122 +1101,82 @@ function renderCart() {
     <div class="cart-row">
       <span class="cart-row-icon">${item.icon}</span>
       <span class="cart-row-name">${item.name}</span>
-      <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
+      <button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button>
       <span class="qty-num">${item.qty}</span>
-      <button class="qty-btn" onclick="changeQty(${item.id},  1)">+</button>
-      <span class="cart-row-sub">${fmt(item.price * item.qty)}</span>
+      <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+      <span class="cart-sub">${fmt(item.price * item.qty)}</span>
     </div>
   `).join('');
 }
 
-// ── PAYMENT ───────────────────────────────────────────────────
-function toggleMethod(m) {
-  payMethod = payMethod === m ? null : m;
-  npRaw = '';
-  // Style buttons
-  const bc   = document.getElementById('btn-cash');
-  const bp   = document.getElementById('btn-paypal');
-  bc.style.background = payMethod === 'Bargeld' ? '#b45309' : 'rgba(0,0,0,0.07)';
-  bc.style.color      = payMethod === 'Bargeld' ? '#fff'    : 'var(--text)';
-  bp.style.background = payMethod === 'PayPal'  ? '#003087' : 'rgba(0,0,0,0.07)';
-  bp.style.color      = payMethod === 'PayPal'  ? '#fff'    : 'var(--text)';
-  renderPayPanel();
-}
-
-function renderPayPanel() {
-  const panel = document.getElementById('pay-panel');
-  if (!payMethod) { panel.style.display = 'none'; return; }
-  panel.style.display = 'block';
-
-  const total  = getTotal();
-  const given  = parseFloat(npRaw) || 0;
-  const change = given - total;
-  const isCash = payMethod === 'Bargeld';
-  const cart   = carts[floor] || [];
-  const btnBg  = isCash ? '#b45309' : '#003087';
-  const noMoney = isCash && npRaw !== '' && given < total;
-  const disabled = cart.length === 0 || noMoney;
-
-  let html = '';
-
-  if (isCash) {
-    html += '<div class="bills-row">';
-    BILLS.forEach(b => {
-      const sel = Math.abs(given - b) < 0.001;
-      html += `<button class="bill-btn ${sel ? 'selected' : ''}" onclick="setBill(${b})">${b} €</button>`;
-    });
-    html += '</div>';
-  } else {
-    html += `<div class="paypal-info">
-      <span style="font-size:22px">🅿️</span>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:#003087">PayPal</div>
-        <div style="font-size:11px;color:var(--text2)">Zu zahlen: ${fmt(total)} – bitte bestätigen</div>
-      </div>
-    </div>`;
-  }
-
-  html += `<div class="given-row">
-    <span class="given-label">${isCash ? 'Gegeben' : 'Betrag'}</span>
-    <span class="given-val" style="color:${npRaw ? 'var(--text)' : 'var(--text3)'}">${npRaw ? fmt(given) : '—'}</span>
-  </div>`;
-
-  if (isCash && npRaw) {
-    const col = change >= 0 ? 'var(--ok)' : 'var(--err)';
-    const bg  = change >= 0 ? 'var(--ok-bg)' : 'var(--err-bg)';
-    html += `<div class="change-box" style="background:${bg};color:${col}">
-      ${change >= 0 ? 'Rückgeld: ' + fmt(change) : 'Fehlbetrag: ' + fmt(Math.abs(change))}
-    </div>`;
-  }
-
-  html += '<div class="numpad">';
-  '123456789'.split('').forEach(k => {
-    html += `<button class="np-btn" onclick="npKey('${k}')">${k}</button>`;
-  });
-  html += `<button class="np-btn" onclick="npKey('.')">.</button>`;
-  html += `<button class="np-btn" onclick="npKey('0')">0</button>`;
-  html += `<button class="np-btn np-del" onclick="npDel()">⌫</button>`;
-  html += '</div>';
-
-  html += `<button class="confirm-btn" style="background:${btnBg}"
-    ${disabled ? 'disabled' : ''} onclick="confirmPayment()">
-    ${isCash ? '💵 Zahlung bestätigen' : '🅿️ PayPal bestätigen'}
-  </button>`;
-
-  panel.innerHTML = html;
-}
-
-function setBill(b) { npRaw = String(b); renderPayPanel(); }
-
+// ── NUMPAD ────────────────────────────────────────────────────
 function npKey(k) {
   if (k === '.' && npRaw.includes('.')) return;
   const parts = npRaw.split('.');
   if (parts[1] && parts[1].length >= 2) return;
-  if (npRaw === '' && k === '.') { npRaw = '0.'; renderPayPanel(); return; }
+  if (npRaw === '' && k === '.') { npRaw = '0.'; updateNumpadDisplay(); return; }
   npRaw += k;
-  renderPayPanel();
+  updateNumpadDisplay();
 }
 
-function npDel() { npRaw = npRaw.slice(0, -1); renderPayPanel(); }
+function npDel() {
+  npRaw = npRaw.slice(0, -1);
+  updateNumpadDisplay();
+}
 
-async function confirmPayment() {
-  const cart  = carts[floor] || [];
+function setBill(b) {
+  npRaw = String(b);
+  // Update bill button highlight
+  [5,10,20,50].forEach(x => {
+    const btn = document.getElementById('bill-' + x);
+    if (btn) btn.classList.toggle('selected', x === b);
+  });
+  updateNumpadDisplay();
+}
+
+function updateNumpadDisplay() {
+  const total  = getTotal();
+  const given  = parseFloat(npRaw) || 0;
+  const change = given - total;
+
+  document.getElementById('given-val').textContent  = npRaw ? fmt(given)  : '0,00 €';
+  document.getElementById('change-val').textContent = npRaw ? fmt(Math.max(change, 0)) : '0,00 €';
+  document.getElementById('change-val').style.color = change < 0 && npRaw ? 'var(--red)' : 'var(--green)';
+
+  // De-highlight bills if number was manually typed
+  const exactBill = [5,10,20,50].includes(given) && npRaw === String(given);
+  [5,10,20,50].forEach(x => {
+    const btn = document.getElementById('bill-' + x);
+    if (btn) btn.classList.toggle('selected', exactBill && x === given);
+  });
+}
+
+// ── PAYMENT ───────────────────────────────────────────────────
+async function pay(method) {
+  const cart  = carts[floor]||[];
   const total = getTotal();
-  if (!payMethod || !cart.length) return;
-  if (payMethod === 'Bargeld' && npRaw !== '' && (parseFloat(npRaw) || 0) < total) return;
+  if (!cart.length) return;
+
+  // For cash: must have given amount and it must be enough
+  const given = parseFloat(npRaw) || 0;
+  if (method === 'Bargeld' && npRaw !== '' && given < total) {
+    toast('⚠️ Gegeben reicht nicht aus');
+    return;
+  }
+
   try {
-    await apiFetch('/api/transactions', {
+    await api('/api/transactions', {
       method: 'POST',
       body: JSON.stringify({
         floor_id: floor,
         total,
-        method: payMethod,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, icon: i.icon }))
+        method,
+        items: cart.map(i => ({ id:i.id, name:i.name, price:i.price, qty:i.qty, icon:i.icon }))
       })
     });
     clearCart();
-    toast((payMethod === 'Bargeld' ? '💵' : '🅿️') + ' Zahlung erfasst ✓');
-  } catch (e) { toast('Fehler beim Speichern'); }
+    toast((method === 'Bargeld' ? '💵' : '🅿️') + ' Zahlung erfasst ✓');
+  } catch(e) { toast('Fehler: ' + e.message); }
 }
 
 // ── STATS ─────────────────────────────────────────────────────
@@ -707,128 +1185,125 @@ async function loadStats() {
   wrap.innerHTML = '<p style="color:var(--text3);padding:20px;font-size:13px">Laden…</p>';
   try {
     const [stats, txs, prods] = await Promise.all([
-      apiFetch('/api/stats'),
-      apiFetch('/api/transactions'),
-      apiFetch('/api/stats/products'),
+      api('/api/stats'),
+      api('/api/transactions'),
+      api('/api/stats/products'),
     ]);
     const floorStats = await Promise.all(
-      Object.values(FLOORS).map(f => apiFetch('/api/stats?floor=' + f.id).then(s => ({ ...f, ...s })))
+      Object.values(FLOORS).map(f => api('/api/stats?floor=' + f.id).then(s => ({...f,...s})))
     );
 
-    // Time buckets for overall chart
+    // Time buckets
     const buckets = {};
     txs.forEach(t => {
-      const b = (t.created_at || '').slice(11, 16);
-      if (b) buckets[b] = (buckets[b] || 0) + t.total;
+      const b = (t.created_at||'').slice(11,16);
+      if (b) buckets[b] = (buckets[b]||0) + t.total;
     });
     const bKeys = Object.keys(buckets).sort();
     const bMax  = Math.max(...Object.values(buckets), 1);
 
-    let html = `
+    let h = `
       <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Gesamtumsatz</div><div class="kpi-val">${fmt(stats.total)}</div><div class="kpi-sub">${stats.count} Transaktionen</div></div>
-        <div class="kpi"><div class="kpi-label">Ø pro Bon</div><div class="kpi-val">${fmt(stats.count ? stats.total / stats.count : 0)}</div></div>
-        <div class="kpi"><div class="kpi-label">💵 Bargeld</div><div class="kpi-val">${fmt(stats.cash)}</div></div>
-        <div class="kpi"><div class="kpi-label">🅿️ PayPal</div><div class="kpi-val">${fmt(stats.paypal)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Gesamtumsatz</div><div class="kpi-val">${fmt(stats.total)}</div><div class="kpi-sub">${stats.count} Transaktionen</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ø pro Bon</div><div class="kpi-val">${fmt(stats.count ? stats.total/stats.count : 0)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">💵 Bargeld</div><div class="kpi-val">${fmt(stats.cash)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">🅿️ PayPal</div><div class="kpi-val">${fmt(stats.paypal)}</div></div>
       </div>`;
 
     if (bKeys.length) {
-      html += `<div class="chart-box"><div class="chart-title">Umsatz über den Abend</div><div class="mini-chart">`;
+      h += `<div class="chart-card"><div class="chart-title">Umsatz über den Abend</div><div class="mini-chart">`;
       bKeys.forEach(k => {
-        const h = Math.max((buckets[k] / bMax) * 42, 4);
-        html += `<div class="mc-col"><div class="mc-bar" style="background:#6d28d9;height:${h}px"></div><span class="mc-lbl">${k}</span></div>`;
+        const ht = Math.max((buckets[k]/bMax)*46, 4);
+        h += `<div class="mc-col"><div class="mc-bar" style="background:var(--accent);height:${ht}px"></div><span class="mc-lbl">${k}</span></div>`;
       });
-      html += '</div></div>';
+      h += '</div></div>';
     }
 
-    html += '<div class="sec-head">Umsatz pro Bar</div>';
+    h += '<div class="sec-head">Umsatz pro Bar</div>';
     floorStats.forEach(f => {
-      const pct = stats.total > 0 ? Math.round(f.total / stats.total * 100) : 0;
-      html += `<div class="floor-row">
-        <div class="floor-row-left">
-          <span style="font-size:22px">${f.emoji}</span>
+      const pct = stats.total > 0 ? Math.round(f.total/stats.total*100) : 0;
+      h += `<div class="floor-stat-row">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">${f.emoji}</span>
           <div>
-            <div style="font-size:13px;font-weight:600">${f.name}</div>
+            <div style="font-size:14px;font-weight:700">${f.name}</div>
             <div style="font-size:11px;color:var(--text3)">${f.count} Transaktionen</div>
           </div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:16px;font-weight:800;color:${f.color}">${fmt(f.total)}</div>
+          <div style="font-size:18px;font-weight:900;color:${f.color}">${fmt(f.total)}</div>
           <div style="font-size:11px;color:var(--text3)">${pct}%</div>
         </div>
       </div>`;
     });
 
     if (prods.length) {
-      html += '<div class="sec-head">🏆 Produktranking</div><div class="ranking-box">';
+      h += '<div class="sec-head">🏆 Produktranking</div><div class="ranking-card">';
       const maxQ = prods[0].qty || 1;
       prods.forEach((p, i) => {
-        const w = ((p.qty / maxQ) * 100).toFixed(1);
-        html += `<div class="rank-item">
+        h += `<div class="rank-row">
           <div class="rank-top">
             <div class="rank-left">
               <span class="rank-n">#${i+1}</span>
-              <span style="font-size:18px">${p.icon}</span>
-              <span style="font-size:13px;font-weight:600">${p.name}</span>
+              <span style="font-size:20px">${p.icon}</span>
+              <span style="font-size:13px;font-weight:700">${p.name}</span>
             </div>
             <div>
-              <span style="font-size:13px;font-weight:700">${p.qty}×</span>
-              <span style="font-size:11px;color:var(--text3);margin-left:5px">${fmt(p.revenue)}</span>
+              <span style="font-size:14px;font-weight:800">${p.qty}×</span>
+              <span style="font-size:11px;color:var(--text3);margin-left:6px">${fmt(p.revenue)}</span>
             </div>
           </div>
-          <div class="rank-bar-bg"><div class="rank-bar" style="background:${COLORS[i % COLORS.length]};width:${w}%"></div></div>
+          <div class="rank-bar-bg">
+            <div class="rank-bar" style="background:${CHART_COLORS[i%CHART_COLORS.length]};width:${(p.qty/maxQ*100).toFixed(1)}%"></div>
+          </div>
         </div>`;
       });
-      html += '</div>';
+      h += '</div>';
 
       if (bKeys.length) {
-        html += '<div class="sec-head">Verkäufe pro Produkt über den Abend</div>';
-        prods.slice(0, 8).forEach((p, idx) => {
-          const pBuckets = {};
+        h += '<div class="sec-head">Verkäufe pro Produkt über den Abend</div>';
+        prods.slice(0,8).forEach((p, idx) => {
+          const pb = {};
           txs.forEach(t => {
-            const b = (t.created_at || '').slice(11, 16);
-            const it = (t.items || []).find(i => i.id === p.id);
-            if (it && b) pBuckets[b] = (pBuckets[b] || 0) + it.qty;
+            const b = (t.created_at||'').slice(11,16);
+            const it = (t.items||[]).find(i => i.id === p.id);
+            if (it && b) pb[b] = (pb[b]||0) + it.qty;
           });
-          const pMax = Math.max(...bKeys.map(k => pBuckets[k] || 0), 1);
-          html += `<div class="prod-chart-box">
-            <div class="prod-chart-head">
-              <span style="font-size:16px">${p.icon}</span>
-              <span style="font-size:13px;font-weight:600">${p.name}</span>
+          const pm = Math.max(...bKeys.map(k => pb[k]||0), 1);
+          h += `<div class="prod-chart-card">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+              <span style="font-size:18px">${p.icon}</span>
+              <span style="font-size:13px;font-weight:700">${p.name}</span>
               <span style="font-size:11px;color:var(--text3);margin-left:auto">${p.qty}× · ${fmt(p.revenue)}</span>
             </div>
             <div class="mini-chart">`;
           bKeys.forEach(k => {
-            const v = pBuckets[k] || 0;
-            const h = v > 0 ? Math.max((v / pMax) * 42, 4) : 0;
-            html += `<div class="mc-col"><div class="mc-bar" style="background:${COLORS[idx % COLORS.length]};height:${h}px"></div><span class="mc-lbl">${k}</span></div>`;
+            const v = pb[k]||0;
+            const ht = v > 0 ? Math.max((v/pm)*46, 4) : 0;
+            h += `<div class="mc-col"><div class="mc-bar" style="background:${CHART_COLORS[idx%CHART_COLORS.length]};height:${ht}px"></div><span class="mc-lbl">${k}</span></div>`;
           });
-          html += '</div></div>';
+          h += '</div></div>';
         });
       }
     }
 
-    if (!txs.length) html += '<p style="color:var(--text3);font-size:13px;text-align:center;padding:24px">Noch keine Transaktionen heute</p>';
+    if (!txs.length) h += '<p style="color:var(--text3);font-size:13px;text-align:center;padding:28px">Noch keine Transaktionen heute</p>';
+    h += `<button class="reset-btn-stat" onclick="tagesabschluss()">Tagesabschluss durchführen</button>`;
+    wrap.innerHTML = h;
 
-    html += `<button class="reset-btn" onclick="tagesabschluss()">Tagesabschluss durchführen</button>`;
-    wrap.innerHTML = html;
-
-  } catch (e) {
-    wrap.innerHTML = '<p style="color:var(--err);padding:20px">Fehler beim Laden</p>';
+  } catch(e) {
+    wrap.innerHTML = '<p style="color:var(--red);padding:20px">Fehler beim Laden der Statistiken</p>';
   }
 }
 
 async function tagesabschluss() {
-  requirePin(async function() {
+  requirePin(async () => {
     if (!confirm('Alle heutigen Transaktionen löschen?')) return;
     try {
-      const r = await apiFetch('/api/transactions/today', {
-        method: 'DELETE',
-        body: JSON.stringify({ pin: pinVal })
-      });
-      if (r.ok) { toast('Tagesabschluss ✓'); loadStats(); }
+      const r = await api('/api/transactions/today', { method:'DELETE', body:JSON.stringify({ pin:pinVal }) });
+      if (r.ok) { toast('Tagesabschluss durchgeführt ✓'); loadStats(); }
       else toast('Fehler: ' + r.error);
-    } catch (e) { toast('Fehler: ' + e.message); }
+    } catch(e) { toast('Fehler: ' + e.message); }
   });
 }
 
@@ -837,138 +1312,129 @@ async function loadAdmin() {
   const wrap = document.getElementById('admin-wrap');
   wrap.innerHTML = '<p style="color:var(--text3);padding:20px;font-size:13px">Laden…</p>';
   await loadAllProducts();
-  let html = '';
+  let h = '';
 
   Object.values(FLOORS).forEach(f => {
-    const prods = products[f.id] || [];
-    html += `
-      <div class="admin-section">
-        <div class="admin-section-title">${f.emoji} ${f.name}</div>
-        <div class="admin-form">
-          <input class="wide"   type="text"   id="an-${f.id}"  placeholder="Produktname"/>
-          <input class="narrow" type="number" id="ap-${f.id}"  placeholder="Preis €" step="0.01" min="0"/>
-          <input class="icon-f" type="text"   id="ai-${f.id}"  placeholder="🍺" maxlength="2"/>
-          <input class="wide"   type="text"   id="ac-${f.id}"  placeholder="Kategorie"/>
-          <button class="admin-add" onclick="addProduct('${f.id}')">+ Hinzufügen</button>
-        </div>
-        <table class="tbl">
-          <thead><tr><th></th><th>Name</th><th>Preis</th><th>Kategorie</th><th></th></tr></thead>
-          <tbody>
-            ${prods.map(p => `
-              <tr>
-                <td style="font-size:20px">${p.icon}</td>
-                <td>${p.name}</td>
-                <td>${fmt(p.price)}</td>
-                <td><span class="cat-tag">${p.category}</span></td>
-                <td><button class="tbl-del" onclick="deleteProduct(${p.id})">×</button></td>
-              </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);padding:10px;font-size:13px">Keine Produkte</td></tr>'}
-          </tbody>
-        </table>
-      </div>`;
+    const prods = products[f.id]||[];
+    h += `<div class="admin-sec">
+      <div class="admin-sec-title">${f.emoji} ${f.name}</div>
+      <div class="admin-form">
+        <input class="w"   type="text"   id="an-${f.id}"  placeholder="Produktname"/>
+        <input class="n"   type="number" id="ap-${f.id}"  placeholder="Preis €" step="0.01" min="0"/>
+        <input class="ico" type="text"   id="ai-${f.id}"  placeholder="🍺" maxlength="2"/>
+        <input class="w"   type="text"   id="ac-${f.id}"  placeholder="Kategorie"/>
+        <button class="admin-add" onclick="addProduct('${f.id}')">+ Hinzufügen</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th></th><th>Name</th><th>Preis</th><th>Kategorie</th><th></th></tr></thead>
+        <tbody>
+          ${prods.map(p => `<tr>
+            <td style="font-size:22px">${p.icon}</td>
+            <td style="font-weight:600">${p.name}</td>
+            <td>${fmt(p.price)}</td>
+            <td><span class="cat-tag">${p.category}</span></td>
+            <td><button class="tbl-del" onclick="deleteProduct(${p.id})">×</button></td>
+          </tr>`).join('') || '<tr><td colspan="5" style="color:var(--text3);padding:10px;font-size:13px">Keine Produkte</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
   });
 
-  html += `
-    <div class="admin-section">
-      <div class="admin-section-title">🔐 Zugangsdaten ändern</div>
-      <div class="settings-row">
-        <label>Admin-Passwort</label>
-        <input type="password" id="s-cpw"  placeholder="Aktuelles Passwort"/>
-        <input type="password" id="s-npw"  placeholder="Neues Passwort"/>
-        <button onclick="changePassword()">Speichern</button>
-      </div>
-      <div class="settings-row">
-        <label>Kassierer-PIN</label>
-        <input type="password" id="s-cpw2" placeholder="Admin-Passwort"/>
-        <input type="text"     id="s-npin" placeholder="Neuer PIN (4–8 Ziffern)" maxlength="8" inputmode="numeric"/>
-        <button onclick="changePin()">Speichern</button>
-      </div>
-    </div>`;
+  h += `<div class="admin-sec">
+    <div class="admin-sec-title">🔐 Zugangsdaten</div>
+    <div class="settings-row">
+      <label>Admin-Passwort ändern</label>
+      <input type="password" id="s-cpw"  placeholder="Aktuelles Passwort"/>
+      <input type="password" id="s-npw"  placeholder="Neues Passwort"/>
+      <button class="settings-save" onclick="changePassword()">Speichern</button>
+    </div>
+    <div class="settings-row">
+      <label>Kassierer-PIN ändern</label>
+      <input type="password" id="s-cpw2" placeholder="Admin-Passwort"/>
+      <input type="text"     id="s-npin" placeholder="Neuer PIN (4–8 Ziffern)" maxlength="8" inputmode="numeric"/>
+      <button class="settings-save" onclick="changePin()">Speichern</button>
+    </div>
+  </div>`;
 
-  wrap.innerHTML = html;
+  wrap.innerHTML = h;
 }
 
 async function addProduct(floorId) {
-  const name  = document.getElementById('an-' + floorId)?.value.trim();
-  const price = parseFloat(document.getElementById('ap-' + floorId)?.value);
-  const icon  = document.getElementById('ai-' + floorId)?.value.trim() || '📦';
-  const cat   = document.getElementById('ac-' + floorId)?.value.trim();
+  const name  = document.getElementById('an-'+floorId)?.value.trim();
+  const price = parseFloat(document.getElementById('ap-'+floorId)?.value);
+  const icon  = document.getElementById('ai-'+floorId)?.value.trim()||'📦';
+  const cat   = document.getElementById('ac-'+floorId)?.value.trim();
   if (!name || isNaN(price) || !cat) { toast('Bitte alle Felder ausfüllen'); return; }
   try {
-    await apiFetch('/api/products', { method: 'POST', body: JSON.stringify({ floor_id: floorId, name, price, category: cat, icon, adminPassword: adminPwCache }) });
+    await api('/api/products', { method:'POST', body:JSON.stringify({ floor_id:floorId, name, price, category:cat, icon, adminPassword:adminPwCache }) });
     toast('Produkt hinzugefügt ✓');
     await loadAllProducts();
     loadAdmin();
     if (floor === floorId) { renderCats(); renderProducts(); }
-  } catch (e) { toast('Fehler: ' + e.message); }
+  } catch(e) { toast('Fehler: ' + e.message); }
 }
 
 async function deleteProduct(id) {
-  if (!confirm('Produkt löschen?')) return;
+  if (!confirm('Produkt wirklich löschen?')) return;
   try {
-    await apiFetch('/api/products/' + id, { method: 'DELETE', body: JSON.stringify({ adminPassword: adminPwCache }) });
+    await api('/api/products/'+id, { method:'DELETE', body:JSON.stringify({ adminPassword:adminPwCache }) });
     toast('Produkt gelöscht');
     await loadAllProducts();
     loadAdmin();
-    renderCats(); renderProducts();
-  } catch (e) { toast('Fehler: ' + e.message); }
+    if (floor) { renderCats(); renderProducts(); }
+  } catch(e) { toast('Fehler: ' + e.message); }
 }
 
 async function changePassword() {
   const curr = document.getElementById('s-cpw')?.value;
   const nw   = document.getElementById('s-npw')?.value;
-  if (!curr || !nw) { toast('Bitte beide Felder ausfüllen'); return; }
+  if (!curr||!nw) { toast('Bitte beide Felder ausfüllen'); return; }
   try {
-    const r = await apiFetch('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ adminPassword: curr, newPassword: nw }) });
+    const r = await api('/api/auth/change-password', { method:'POST', body:JSON.stringify({ adminPassword:curr, newPassword:nw }) });
     if (r.ok) { adminPwCache = nw; toast('Passwort geändert ✓'); }
-    else toast('Fehler: ' + r.error);
-  } catch (e) { toast('Fehler'); }
+    else toast('Fehler: '+(r.error||'Unbekannt'));
+  } catch(e) { toast('Fehler'); }
 }
 
 async function changePin() {
   const curr = document.getElementById('s-cpw2')?.value;
   const pin  = document.getElementById('s-npin')?.value;
-  if (!curr || !pin) { toast('Bitte beide Felder ausfüllen'); return; }
+  if (!curr||!pin) { toast('Bitte beide Felder ausfüllen'); return; }
   try {
-    const r = await apiFetch('/api/auth/change-pin', { method: 'POST', body: JSON.stringify({ adminPassword: curr, newPin: pin }) });
+    const r = await api('/api/auth/change-pin', { method:'POST', body:JSON.stringify({ adminPassword:curr, newPin:pin }) });
     if (r.ok) { pinUnlocked = false; toast('PIN geändert ✓'); }
-    else toast('Fehler: ' + r.error);
-  } catch (e) { toast('Fehler'); }
+    else toast('Fehler: '+(r.error||'Unbekannt'));
+  } catch(e) { toast('Fehler'); }
 }
 
-// ── PIN OVERLAY ───────────────────────────────────────────────
+// ── PIN ───────────────────────────────────────────────────────
 function requirePin(cb) {
   if (pinUnlocked) { cb(); return; }
-  pinCb  = cb;
-  pinVal = '';
+  pinCb = cb; pinVal = '';
   document.getElementById('pin-err').textContent = '';
   renderPinDots();
   document.getElementById('pin-overlay').classList.add('show');
 }
-
 function closePinOverlay() {
   document.getElementById('pin-overlay').classList.remove('show');
   pinVal = '';
 }
-
 function renderPinDots() {
   document.getElementById('pin-dots').innerHTML =
-    Array.from({ length: 4 }, (_, i) =>
-      `<div class="pin-dot ${i < pinVal.length ? 'on' : ''}"></div>`
+    Array.from({length:4}, (_,i) =>
+      `<div class="pin-dot ${i < pinVal.length ? 'on':''}"></div>`
     ).join('');
 }
-
 function pinKey(k) {
   if (pinVal.length >= 8) return;
   pinVal += k;
   renderPinDots();
   if (pinVal.length >= 4) setTimeout(submitPin, 300);
 }
-
-function pinDel() { pinVal = pinVal.slice(0, -1); renderPinDots(); }
-
+function pinDel() { pinVal = pinVal.slice(0,-1); renderPinDots(); }
 async function submitPin() {
   try {
-    const { ok } = await apiFetch('/api/auth/pin', { method: 'POST', body: JSON.stringify({ pin: pinVal }) });
+    const { ok } = await api('/api/auth/pin', { method:'POST', body:JSON.stringify({ pin:pinVal }) });
     if (ok) {
       pinUnlocked = true;
       closePinOverlay();
@@ -979,63 +1445,50 @@ async function submitPin() {
       renderPinDots();
       setTimeout(() => document.getElementById('pin-err').textContent = '', 1500);
     }
-  } catch { toast('Verbindungsfehler'); pinVal = ''; renderPinDots(); }
+  } catch { toast('Verbindungsfehler'); pinVal=''; renderPinDots(); }
 }
 
 // ── ADMIN OVERLAY ─────────────────────────────────────────────
 function requireAdmin() {
   if (adminUnlocked) { showScreen('admin'); return; }
-  document.getElementById('admin-pw-input').value = '';
-  document.getElementById('admin-pw-err').textContent = '';
+  document.getElementById('admin-pw').value = '';
+  document.getElementById('admin-err').textContent = '';
   document.getElementById('admin-overlay').classList.add('show');
-  setTimeout(() => document.getElementById('admin-pw-input').focus(), 100);
+  setTimeout(() => document.getElementById('admin-pw').focus(), 100);
 }
-
 function closeAdminOverlay() {
   document.getElementById('admin-overlay').classList.remove('show');
 }
-
 async function submitAdminPw() {
-  const pw = document.getElementById('admin-pw-input').value;
+  const pw = document.getElementById('admin-pw').value;
   try {
-    const { ok } = await apiFetch('/api/auth/admin', { method: 'POST', body: JSON.stringify({ password: pw }) });
+    const { ok } = await api('/api/auth/admin', { method:'POST', body:JSON.stringify({ password:pw }) });
     if (ok) {
       adminUnlocked = true;
       adminPwCache  = pw;
       closeAdminOverlay();
       showScreen('admin');
     } else {
-      document.getElementById('admin-pw-err').textContent = 'Falsches Passwort';
+      document.getElementById('admin-err').textContent = 'Falsches Passwort';
     }
-  } catch { document.getElementById('admin-pw-err').textContent = 'Verbindungsfehler'; }
+  } catch { document.getElementById('admin-err').textContent = 'Verbindungsfehler'; }
 }
 
 // ── WEBSOCKET ─────────────────────────────────────────────────
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const ws = new WebSocket(`${proto}://${location.host}`);
-
   ws.onopen  = () => setConn(true);
   ws.onclose = () => { setConn(false); setTimeout(connectWS, 3000); };
   ws.onerror = () => ws.close();
-
   ws.onmessage = e => {
     const { event } = JSON.parse(e.data);
-    // Pulse conn dot
-    const dot = document.getElementById('conn');
+    const dot = document.getElementById('conn-dot');
     dot.style.transform = 'scale(1.8)';
     setTimeout(() => dot.style.transform = '', 400);
-
-    if (event === 'transaction') {
-      if (document.getElementById('stats').classList.contains('active')) loadStats();
-    }
-    if (event === 'products_changed') {
-      loadAllProducts().then(() => { renderCats(); renderProducts(); });
-      if (document.getElementById('admin').classList.contains('active')) loadAdmin();
-    }
-    if (event === 'reset') {
-      if (document.getElementById('stats').classList.contains('active')) loadStats();
-    }
+    if (event === 'transaction' && document.getElementById('screen-stats').classList.contains('active')) loadStats();
+    if (event === 'products_changed') { loadAllProducts().then(() => { renderCats(); renderProducts(); }); }
+    if (event === 'reset' && document.getElementById('screen-stats').classList.contains('active')) loadStats();
   };
 }
 
