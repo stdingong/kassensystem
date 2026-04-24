@@ -340,7 +340,7 @@ body{
 /* Numpad + Bills side by side */
 .np-bills{
   display:grid;
-  grid-template-columns:1fr 68px;
+  grid-template-columns:3fr 1fr;
   gap:7px;
   margin-bottom:8px;
 }
@@ -384,6 +384,8 @@ body{
   display:flex;align-items:center;justify-content:center;
   box-shadow:var(--shadow-btn);
   transition:all .08s;
+  font-size: 18px;    /* Schrift etwas größer (vorher 15px) */
+  min-height: 50px;
 }
 .bill:active{transform:scale(.9);}
 .bill.sel{background:var(--accent);border-color:#8a5500;color:#fff;}
