@@ -129,7 +129,7 @@ app.get('/api/transactions', (q,r) => {
 });
 app.post('/api/transactions', (q,r) => {
   const { floor_id,total,method,items } = q.body;
-  if (!floor_id||!total||!method||!items?.length) return r.status(400).json({ error:'Fehlende Felder' });
+  if (!floor_id||total==null||!method||!items?.length) return r.status(400).json({ error:'Fehlende Felder' });
   const res = db.prepare('INSERT INTO transactions(floor_id,total,method,items_json) VALUES(?,?,?,?)').run(floor_id,total,method,JSON.stringify(items));
   const saved = { ...db.prepare('SELECT * FROM transactions WHERE id=?').get(res.lastInsertRowid), items };
   broadcast('transaction', saved);

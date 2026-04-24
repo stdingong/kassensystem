@@ -273,7 +273,7 @@ body{
   border-bottom:1px solid var(--border);
 }
 .ci{font-size:20px;flex-shrink:0;}
-.cn{flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.cn{flex:1;font-size:18px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
 .qb{
   width:30px;height:30px;
   border-radius:50%;
@@ -514,6 +514,45 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 .m-btn{flex:1;padding:13px;border-radius:10px;border:1.5px solid var(--border2);background:none;cursor:pointer;font-size:15px;font-family:inherit;color:var(--text);font-weight:600;}
 .m-btn.ok{background:var(--accent);color:#fff;border-color:var(--accent);}
 
+/* Pfand buttons */
+.pfand-btns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  padding:8px 12px;
+  flex-shrink:0;
+  border-top:1.5px solid var(--border2);
+}
+.pfand-btn{
+  border-radius:12px;
+  border:2px solid;
+  font-weight:900;
+  cursor:pointer;
+  font-family:inherit;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:10px 6px;
+  line-height:1.25;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  box-shadow:var(--shadow-btn);
+  transition:all .1s;
+}
+.pfand-btn:active{transform:scale(.95);}
+.pfand-btn-icon{font-size:22px;line-height:1;}
+.pfand-btn-label{font-size:13px;}
+.pfand-btn-price{font-size:12px;font-weight:700;opacity:.85;}
+.pfand-vergabe  {background:#d1fae5;border-color:#059669;color:#065f46;}
+.pfand-rueckgabe{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
+
+/* Pfand cart rows */
+.pfand-cs-pos{font-size:12px;color:var(--green);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
+.pfand-cs-neg{font-size:12px;color:var(--red);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
+
 /* Toast */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(90px);background:#1a1208;color:#fff;padding:13px 28px;border-radius:24px;font-size:15px;font-weight:700;z-index:900;transition:transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.4);}
 .toast.show{transform:translateX(-50%) translateY(0);}
@@ -567,6 +606,20 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
       </div>
       <div class="cart-list" id="cart-list">
         <p class="cart-empty">Noch keine Artikel</p>
+      </div>
+
+      <!-- Pfand buttons -->
+      <div class="pfand-btns">
+        <button class="pfand-btn pfand-vergabe" onclick="addPfand('vergabe')">
+          <span class="pfand-btn-icon">💴</span>
+          <span class="pfand-btn-label">Pfandvergabe</span>
+          <span class="pfand-btn-price">(+1.00 €)</span>
+        </button>
+        <button class="pfand-btn pfand-rueckgabe" onclick="addPfand('rueckgabe')">
+          <span class="pfand-btn-icon">↩️</span>
+          <span class="pfand-btn-label">Pfandrückgabe</span>
+          <span class="pfand-btn-price">(-1.00 €)</span>
+        </button>
       </div>
 
       <!-- Totals -->
@@ -732,10 +785,13 @@ const CHART_COLORS = ['#c8860a','#6d28d9','#0e7490','#065f46','#9f1239','#1d4ed8
 
 let products  = {keller:[],erd:[]};
 let carts     = {keller:[],erd:[]};
+let pfands    = {keller:{vergabe:0,rueckgabe:0}, erd:{vergabe:0,rueckgabe:0}};
 let floor     = 'keller';
 let activeCat = 'Alle';
 let npRaw     = '';
 let pinUnlocked=false, adminUnlocked=false, adminPwCache='', pinCb=null, pinVal='';
+
+const PFAND_PRICE = 1.00;
 
 const fmt = n => Number(n).toFixed(2).replace('.',',') + ' €';
 
@@ -815,7 +871,12 @@ function renderProducts(){
 }
 
 /* ── cart ── */
-function getTotal(){return(carts[floor]||[]).reduce((s,i)=>s+i.price*i.qty,0);}
+function getItemsTotal(){ return (carts[floor]||[]).reduce((s,i)=>s+i.price*i.qty,0); }
+function getPfandTotal(){ const p=pfands[floor]; return (p.vergabe-p.rueckgabe)*PFAND_PRICE; }
+function getTotal(){ return getItemsTotal()+getPfandTotal(); }
+
+function addPfand(type){ pfands[floor][type]++; renderCart(); updateDisplay(); }
+function changePfand(type,d){ pfands[floor][type]=Math.max(0,pfands[floor][type]+d); renderCart(); updateDisplay(); }
 
 function addToCart(id){
   const p=(products[floor]||[]).find(x=>x.id===id); if(!p) return;
@@ -830,18 +891,25 @@ function changeQty(id,d){
   renderCart(); updateDisplay();
 }
 
-function clearCart(){carts[floor]=[]; npRaw=''; renderCart(); updateDisplay();}
+function clearCart(){carts[floor]=[]; pfands[floor]={vergabe:0,rueckgabe:0}; npRaw=''; renderCart(); updateDisplay();}
 
 function renderCart(){
-  const cart=carts[floor]||[], total=getTotal(), tax=total-total/1.19;
-  const has=cart.length>0;
+  const cart=carts[floor]||[];
+  const p=pfands[floor];
+  const itemsTotal=getItemsTotal(), pfandNet=getPfandTotal(), total=getTotal();
+  const tax=itemsTotal-itemsTotal/1.19;
+  const hasAnything=cart.length>0||p.vergabe>0||p.rueckgabe>0;
+
   document.getElementById('total-val').textContent=fmt(total);
-  document.getElementById('total-tax').textContent=`inkl. 19% MwSt: ${fmt(tax)}`;
-  document.getElementById('btn-cash').disabled=!has;
-  document.getElementById('btn-paypal').disabled=!has;
+  document.getElementById('total-tax').innerHTML=
+    `inkl. 19% MwSt: ${fmt(tax)}&nbsp;&nbsp;&nbsp;&nbsp;P: 0% Pfand`;
+  document.getElementById('btn-cash').disabled=!hasAnything;
+  document.getElementById('btn-paypal').disabled=!hasAnything;
+
   const el=document.getElementById('cart-list');
-  if(!cart.length){el.innerHTML='<p class="cart-empty">Noch keine Artikel</p>';return;}
-  el.innerHTML=cart.map(item=>`
+  if(!hasAnything){el.innerHTML='<p class="cart-empty">Noch keine Artikel</p>';return;}
+
+  let html=cart.map(item=>`
     <div class="cart-row">
       <span class="ci">${item.icon}</span>
       <span class="cn">${item.name}</span>
@@ -850,6 +918,28 @@ function renderCart(){
       <button class="qb" onclick="changeQty(${item.id}, 1)">+</button>
       <span class="cs">${fmt(item.price*item.qty)}</span>
     </div>`).join('');
+
+  if(p.vergabe>0) html+=`
+    <div class="cart-row">
+      <span class="ci">🪙</span>
+      <span class="cn" style="font-size:14px">Pfandvergabe (+1.00 €)</span>
+      <button class="qb" onclick="changePfand('vergabe',-1)">−</button>
+      <span class="qn">${p.vergabe}</span>
+      <button class="qb" onclick="changePfand('vergabe',1)">+</button>
+      <span class="pfand-cs-pos">+${fmt(p.vergabe*PFAND_PRICE)}</span>
+    </div>`;
+
+  if(p.rueckgabe>0) html+=`
+    <div class="cart-row">
+      <span class="ci">🍾</span>
+      <span class="cn" style="font-size:14px">Pfandrückgabe (-1.00 €)</span>
+      <button class="qb" onclick="changePfand('rueckgabe',-1)">−</button>
+      <span class="qn">${p.rueckgabe}</span>
+      <button class="qb" onclick="changePfand('rueckgabe',1)">+</button>
+      <span class="pfand-cs-neg">-${fmt(p.rueckgabe*PFAND_PRICE)}</span>
+    </div>`;
+
+  el.innerHTML=html;
 }
 
 /* ── numpad ── */
@@ -880,14 +970,18 @@ function updateDisplay(){
 
 /* ── payment ── */
 async function pay(method){
-  const cart=carts[floor]||[], total=getTotal();
-  if(!cart.length) return;
+  const cart=carts[floor]||[], p=pfands[floor], total=getTotal();
+  const hasAnything=cart.length>0||p.vergabe>0||p.rueckgabe>0;
+  if(!hasAnything) return;
   const given=parseFloat(npRaw)||0;
   if(method==='Bargeld'&&npRaw!==''&&given<total){toast('⚠️ Betrag reicht nicht aus');return;}
+  const pfandItems=[];
+  if(p.vergabe>0)   pfandItems.push({id:'pfand-v',name:'Pfandvergabe',  price:PFAND_PRICE, qty:p.vergabe,   icon:'🪙'});
+  if(p.rueckgabe>0) pfandItems.push({id:'pfand-r',name:'Pfandrückgabe', price:-PFAND_PRICE,qty:p.rueckgabe, icon:'🍾'});
+  const allItems=[...cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty,icon:i.icon})),...pfandItems];
   try{
     await api('/api/transactions',{method:'POST',body:JSON.stringify({
-      floor_id:floor,total,method,
-      items:cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty,icon:i.icon}))
+      floor_id:floor,total,method,items:allItems
     })});
     clearCart();
     toast((method==='Bargeld'?'💵':'🅿️')+' Zahlung erfasst ✓');
