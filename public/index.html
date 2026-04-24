@@ -328,14 +328,14 @@ body{
 .gr-box{
   background:var(--bg-npbtn);
   border:1px solid var(--border2);
-  border-radius:8px;
-  padding:6px 10px;
+  border-radius:10px;
+  padding:10px 14px;
   display:flex;
-  justify-content:space-between;
-  align-items:center;
+  flex-direction:column;
+  gap:2px;
 }
-.gr-lbl{font-size:11px;color:var(--text3);font-weight:600;}
-.gr-val{font-size:16px;font-weight:800;color:var(--text);}
+.gr-lbl{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.gr-val{font-size:26px;font-weight:900;color:var(--text);line-height:1;}
 
 /* Numpad + Bills side by side */
 .np-bills{
@@ -553,6 +553,35 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 .pfand-cs-pos{font-size:12px;color:var(--green);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
 .pfand-cs-neg{font-size:12px;color:var(--red);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
 
+/* Letzte Bestellungen */
+.last-orders-wrap{
+  flex-shrink:0;
+  border-top:1.5px solid var(--border2);
+  background:var(--bg-side);
+}
+.last-orders-head{
+  padding:5px 14px 3px;
+  font-size:10px;
+  font-weight:700;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.lo-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:5px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  min-height:32px;
+}
+.lo-row:last-child{border-bottom:none;}
+.lo-time{color:var(--text3);min-width:36px;font-size:11px;flex-shrink:0;}
+.lo-icons{font-size:13px;flex-shrink:0;white-space:nowrap;}
+.lo-desc{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.lo-amt{font-weight:800;color:var(--accent);flex-shrink:0;font-size:13px;}
+
 /* Toast */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(90px);background:#1a1208;color:#fff;padding:13px 28px;border-radius:24px;font-size:15px;font-weight:700;z-index:900;transition:transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.4);}
 .toast.show{transform:translateX(-50%) translateY(0);}
@@ -611,12 +640,12 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
       <!-- Pfand buttons -->
       <div class="pfand-btns">
         <button class="pfand-btn pfand-vergabe" onclick="addPfand('vergabe')">
-          <span class="pfand-btn-icon">💴</span>
+          <span class="pfand-btn-icon">🪙</span>
           <span class="pfand-btn-label">Pfandvergabe</span>
           <span class="pfand-btn-price">(+1.00 €)</span>
         </button>
         <button class="pfand-btn pfand-rueckgabe" onclick="addPfand('rueckgabe')">
-          <span class="pfand-btn-icon">↩️</span>
+          <span class="pfand-btn-icon">🔄</span>
           <span class="pfand-btn-label">Pfandrückgabe</span>
           <span class="pfand-btn-price">(-1.00 €)</span>
         </button>
@@ -673,11 +702,19 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
         <!-- Pay buttons -->
         <div class="pay-btns">
           <button class="pay-btn pay-cash"   id="btn-cash"   disabled onclick="pay('Bargeld')">
-            <span style="font-size:20px">💵</span> Bargeld
+            <span style="font-size:20px">💶</span> Bargeld
           </button>
           <button class="pay-btn pay-paypal" id="btn-paypal" disabled onclick="pay('PayPal')">
             <span style="font-size:20px">🅿️</span> PayPal
           </button>
+        </div>
+      </div>
+
+      <!-- Letzte Bestellungen -->
+      <div class="last-orders-wrap">
+        <div class="last-orders-head">🕐 Letzte Bestellungen</div>
+        <div id="last-orders-list">
+          <div class="lo-row"><span class="lo-desc" style="color:var(--text3)">Laden…</span></div>
         </div>
       </div>
 
@@ -827,7 +864,7 @@ function switchFloor(id){
   Object.keys(FLOORS).forEach(fid=>{
     document.getElementById('tab-'+fid)?.classList.toggle('active',fid===id);
   });
-  renderCats(); renderProducts(); renderCart(); updateDisplay();
+  renderCats(); renderProducts(); renderCart(); updateDisplay(); loadLastOrders();
 }
 
 /* ── products ── */
@@ -931,7 +968,7 @@ function renderCart(){
 
   if(p.rueckgabe>0) html+=`
     <div class="cart-row">
-      <span class="ci">🍾</span>
+      <span class="ci">🔄</span>
       <span class="cn" style="font-size:14px">Pfandrückgabe (-1.00 €)</span>
       <button class="qb" onclick="changePfand('rueckgabe',-1)">−</button>
       <span class="qn">${p.rueckgabe}</span>
@@ -977,14 +1014,15 @@ async function pay(method){
   if(method==='Bargeld'&&npRaw!==''&&given<total){toast('⚠️ Betrag reicht nicht aus');return;}
   const pfandItems=[];
   if(p.vergabe>0)   pfandItems.push({id:'pfand-v',name:'Pfandvergabe',  price:PFAND_PRICE, qty:p.vergabe,   icon:'🪙'});
-  if(p.rueckgabe>0) pfandItems.push({id:'pfand-r',name:'Pfandrückgabe', price:-PFAND_PRICE,qty:p.rueckgabe, icon:'🍾'});
+  if(p.rueckgabe>0) pfandItems.push({id:'pfand-r',name:'Pfandrückgabe', price:-PFAND_PRICE,qty:p.rueckgabe, icon:'🔄'});
   const allItems=[...cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty,icon:i.icon})),...pfandItems];
   try{
     await api('/api/transactions',{method:'POST',body:JSON.stringify({
       floor_id:floor,total,method,items:allItems
     })});
     clearCart();
-    toast((method==='Bargeld'?'💵':'🅿️')+' Zahlung erfasst ✓');
+    loadLastOrders();
+    toast((method==='Bargeld'?'💶':'🅿️')+' Zahlung erfasst ✓');
   }catch(e){toast('Fehler: '+e.message);}
 }
 
@@ -1135,6 +1173,37 @@ async function changePin(){
   try{const r=await api('/api/auth/change-pin',{method:'POST',body:JSON.stringify({adminPassword:c,newPin:p})});r.ok?(pinUnlocked=false,toast('PIN geändert ✓')):toast('Fehler: '+r.error);}catch{toast('Fehler');}
 }
 
+/* ── letzte Bestellungen ── */
+async function loadLastOrders(){
+  try{
+    const txs=await api('/api/transactions');
+    renderLastOrders(txs.slice(0,3));
+  }catch(e){}
+}
+
+function renderLastOrders(orders){
+  const el=document.getElementById('last-orders-list');
+  if(!el) return;
+  if(!orders||!orders.length){
+    el.innerHTML='<div class="lo-row"><span class="lo-desc" style="color:var(--text3)">Noch keine Bestellungen heute</span></div>';
+    return;
+  }
+  el.innerHTML=orders.map(tx=>{
+    const time=(tx.created_at||'').slice(11,16);
+    const floorEmoji=FLOORS[tx.floor_id]?.emoji||'🏪';
+    const methodIcon=tx.method==='Bargeld'?'💶':'🅿️';
+    const items=(tx.items||[]).filter(i=>i.id!=='pfand-v'&&i.id!=='pfand-r');
+    const pfandPart=(tx.items||[]).some(i=>i.id==='pfand-v'||i.id==='pfand-r')?' 🪙':'';
+    const desc=items.slice(0,3).map(i=>`${i.qty}× ${i.name.split(' ')[0]}`).join(' · ')||'—';
+    return `<div class="lo-row">
+      <span class="lo-time">${time}</span>
+      <span class="lo-icons">${floorEmoji}${methodIcon}</span>
+      <span class="lo-desc">${desc}${pfandPart}</span>
+      <span class="lo-amt">${fmt(tx.total)}</span>
+    </div>`;
+  }).join('');
+}
+
 /* ── PIN ── */
 function requirePin(cb){
   if(pinUnlocked){cb();return;}
@@ -1185,14 +1254,14 @@ function connectWS(){
     const{event}=JSON.parse(e.data);
     const d=document.getElementById('conn-dot');
     d.style.transform='scale(1.8)';setTimeout(()=>d.style.transform='',400);
-    if(event==='transaction'&&document.getElementById('screen-stats').classList.contains('active')) loadStats();
+    if(event==='transaction'){loadLastOrders();if(document.getElementById('screen-stats').classList.contains('active')) loadStats();}
     if(event==='products_changed'){loadAllProducts().then(()=>{renderCats();renderProducts();});}
     if(event==='reset'&&document.getElementById('screen-stats').classList.contains('active')) loadStats();
   };
 }
 
 /* ── BOOT ── */
-(async()=>{await loadAllProducts();switchFloor('keller');connectWS();})();
+(async()=>{await loadAllProducts();switchFloor('keller');loadLastOrders();connectWS();})();
 </script>
 </body>
 </html>
