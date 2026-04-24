@@ -98,23 +98,23 @@ body{
 /* ════════════════════════════════════════
    MAIN AREA
 ════════════════════════════════════════ */
-.main{
-  flex:1;
-  display:flex;
-  overflow:hidden;
-  min-height:0;
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* ════════════════════════════════════════
-   LEFT  – products
+    LEFT  – products (60%)
 ════════════════════════════════════════ */
-.left{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  background:var(--bg-left);
-  overflow:hidden;
-  min-width:0;
+.left {
+  flex: 60;              /* Nimmt 60 Anteile des verfügbaren Platzes */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-left);
+  overflow: hidden;
+  min-width: 0;
 }
 
 /* Floor heading */
@@ -226,18 +226,18 @@ body{
 }
 
 /* ════════════════════════════════════════
-   RIGHT SIDEBAR  (wider for tablet)
+    RIGHT – sidebar (40%)
 ════════════════════════════════════════ */
-.right{
-  width:320px;
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  background:var(--bg-side);
-  border-left:1.5px solid var(--border2);
-  overflow:hidden;
+.right {
+  flex: 40;              /* Nimmt 40 Anteile des verfügbaren Platzes */
+  /* width: 320px; <-- Diese Zeile muss weg! */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-side);
+  border-left: 1.5px solid var(--border2);
+  overflow: hidden;
+  min-width: 0;          /* Wichtig, damit der Inhalt nicht rausdrückt */
 }
-
 /* ── Cart ── */
 .cart-head{
   display:flex;
