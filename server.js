@@ -27,7 +27,9 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     floor_id TEXT NOT NULL DEFAULT 'keller',
     name TEXT NOT NULL, price REAL NOT NULL,
-    category TEXT NOT NULL, icon TEXT NOT NULL DEFAULT '🍺',
+    category TEXT NOT NULL,
+    icon TEXT NOT NULL DEFAULT '🍺',
+    img_url TEXT DEFAULT NULL,
     active INTEGER NOT NULL DEFAULT 1
   );
   CREATE TABLE IF NOT EXISTS transactions (
@@ -47,27 +49,26 @@ function setSetting(k, v) { db.prepare('INSERT OR REPLACE INTO settings(key,valu
 if (db.prepare('SELECT COUNT(*) as c FROM products').get().c === 0) {
   const ins = db.prepare('INSERT INTO products(floor_id,name,price,category,icon) VALUES(?,?,?,?,?)');
   [
-    ['keller','Helles',        2.50,'Bier',        '🍺'],
-    ['keller','Radler',        2.50,'Bier',        '🍋'],
-    ['keller','Äppler Becher', 2.00,'Bier',        '🍏'],
-    ['keller','Äppler Flasche',5.00,'Bier',        '🍶'],
-    ['keller','Sekt',          4.00,'Sekt & Wein', '🥂'],
-    ['keller','Weißwein',      4.00,'Sekt & Wein', '🥃'],
-    ['keller','Rotling',       4.00,'Sekt & Wein', '🍷'],
-    ['keller','Sekt Mate',     4.00,'Sekt & Wein', '🧉'],
-    ['keller','Vodka Mate',    4.00,'Shots',       '🔥'],
-    ['keller','Vodka Bull',    3.00,'Shots',       '⚡'],
-    ['keller','Spezi',         3.00,'Alkoholfrei', '🥤'],
-    ['keller','Limo',          3.00,'Alkoholfrei', '🍋'],
-    ['keller','Mate',          3.00,'Alkoholfrei', '🧃'],
-    ['keller','Pfeffi Shot',   1.00,'Shots',       '❄️'],
-    ['keller','Vodka Shot',    1.00,'Shots',       '💀'],
-    ['keller','Limoncello Shot',1.00,'Shots',      '🍋'],
-    ['keller','Blind Shot',    0.50,'Shots',       '🎲'],
-    ['keller','Sekt Flasche',  10.00,'Flaschen',   '🍾'],
-    ['keller','Pfeffi Flasche',15.00,'Flaschen',   '🌿'],
+    ['keller','Helles',          2.50,'Bier',       '🍺'],
+    ['keller','Radler',          2.50,'Bier',       '🍋'],
+    ['keller','Äppler Becher',   2.00,'Bier',       '🍏'],
+    ['keller','Äppler Flasche',  5.00,'Bier',       '🍶'],
+    ['keller','Sekt',            4.00,'Sekt & Wein','🥂'],
+    ['keller','Weißwein',        4.00,'Sekt & Wein','🥃'],
+    ['keller','Rotling',         4.00,'Sekt & Wein','🍷'],
+    ['keller','Sekt Mate',       4.00,'Sekt & Wein','🧉'],
+    ['keller','Vodka Mate',      4.00,'Shots',      '🔥'],
+    ['keller','Vodka Bull',      3.00,'Shots',      '⚡'],
+    ['keller','Spezi',           3.00,'Alkoholfrei','🥤'],
+    ['keller','Limo',            3.00,'Alkoholfrei','🍋'],
+    ['keller','Mate',            3.00,'Alkoholfrei','🧃'],
+    ['keller','Pfeffi Shot',     1.00,'Shots',      '❄️'],
+    ['keller','Vodka Shot',      1.00,'Shots',      '💀'],
+    ['keller','Limoncello Shot', 1.00,'Shots',      '🍋'],
+    ['keller','Blind Shot',      0.50,'Shots',      '🎲'],
+    ['keller','Sekt Flasche',   10.00,'Flaschen',   '🍾'],
+    ['keller','Pfeffi Flasche', 15.00,'Flaschen',   '🌿'],
     ['keller','Bierpong Special',12.00,'Specials',  '🏓'],
-
     ['erd','Helles',        2.50,'Bier',        '🍺'],
     ['erd','Radler',        2.50,'Bier',        '🍋'],
     ['erd','Sekt',          4.00,'Sekt & Wein', '🥂'],
@@ -84,12 +85,11 @@ if (db.prepare('SELECT COUNT(*) as c FROM products').get().c === 0) {
   ].forEach(r => ins.run(...r));
 }
 
-// Auth
 app.post('/api/auth/pin',      (q,r) => r.json({ ok: q.body.pin      === getSetting('kassierer_pin','1234') }));
 app.post('/api/auth/admin',    (q,r) => r.json({ ok: q.body.password === getSetting('admin_password','admin123') }));
 app.post('/api/auth/change-pin', (q,r) => {
   if (q.body.adminPassword !== getSetting('admin_password','admin123')) return r.status(403).json({ error:'Falsches Passwort' });
-  if (!/^\d{4,8}$/.test(q.body.newPin)) return r.status(400).json({ error:'PIN muss 4–8 Ziffern sein' });
+  if (!/^\d{4,8}$/.test(q.body.newPin)) return r.status(400).json({ error:'PIN 4–8 Ziffern' });
   setSetting('kassierer_pin', q.body.newPin); r.json({ ok:true });
 });
 app.post('/api/auth/change-password', (q,r) => {
@@ -98,7 +98,6 @@ app.post('/api/auth/change-password', (q,r) => {
   setSetting('admin_password', q.body.newPassword); r.json({ ok:true });
 });
 
-// Products
 app.get('/api/products', (q,r) => {
   const sql = q.query.floor
     ? 'SELECT * FROM products WHERE active=1 AND floor_id=? ORDER BY category,name'
@@ -121,7 +120,6 @@ app.delete('/api/products/:id', (q,r) => {
   r.json({ ok:true });
 });
 
-// Transactions
 app.get('/api/transactions', (q,r) => {
   let sql = "SELECT * FROM transactions WHERE " + (q.query.all ? '1=1' : "date(created_at)=date('now','localtime')");
   if (q.query.floor) sql += ' AND floor_id=?';
@@ -140,9 +138,10 @@ app.post('/api/transactions', (q,r) => {
 app.get('/api/stats', (q,r) => {
   const fc = q.query.floor ? 'AND floor_id=?' : '';
   const fa = q.query.floor ? [q.query.floor] : [];
-  r.json(db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(total),0) as total,
+  r.json(db.prepare(`SELECT COUNT(*) as count,
+    COALESCE(SUM(total),0) as total,
     COALESCE(SUM(CASE WHEN method='Bargeld' THEN total ELSE 0 END),0) as cash,
-    COALESCE(SUM(CASE WHEN method='PayPal' THEN total ELSE 0 END),0) as paypal
+    COALESCE(SUM(CASE WHEN method='PayPal'  THEN total ELSE 0 END),0) as paypal
     FROM transactions WHERE date(created_at)=date('now','localtime') ${fc}`).get(...fa));
 });
 app.get('/api/stats/products', (q,r) => {
