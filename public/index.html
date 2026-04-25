@@ -552,35 +552,6 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 .pfand-cs-pos{font-size:12px;color:var(--green);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
 .pfand-cs-neg{font-size:12px;color:var(--red);min-width:48px;text-align:right;flex-shrink:0;font-weight:700;}
 
-/* Letzte Bestellungen */
-.last-orders-wrap{
-  flex-shrink:0;
-  border-top:1.5px solid var(--border2);
-  background:var(--bg-side);
-}
-.last-orders-head{
-  padding:5px 14px 3px;
-  font-size:10px;
-  font-weight:700;
-  color:var(--text3);
-  text-transform:uppercase;
-  letter-spacing:.5px;
-}
-.lo-row{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  padding:5px 12px;
-  border-bottom:1px solid var(--border);
-  font-size:12px;
-  min-height:32px;
-}
-.lo-row:last-child{border-bottom:none;}
-.lo-time{color:var(--text3);min-width:36px;font-size:11px;flex-shrink:0;}
-.lo-icons{font-size:13px;flex-shrink:0;white-space:nowrap;}
-.lo-desc{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
-.lo-amt{font-weight:800;color:var(--accent);flex-shrink:0;font-size:13px;}
-
 /* Toast */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(90px);background:#1a1208;color:#fff;padding:13px 28px;border-radius:24px;font-size:15px;font-weight:700;z-index:900;transition:transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.4);}
 .toast.show{transform:translateX(-50%) translateY(0);}
@@ -805,14 +776,6 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
         </div>
       </div>
 
-      <!-- Letzte Bestellungen -->
-      <div class="last-orders-wrap">
-        <div class="last-orders-head">🕐 Letzte Bestellungen</div>
-        <div id="last-orders-list">
-          <div class="lo-row"><span class="lo-desc" style="color:var(--text3)">Laden…</span></div>
-        </div>
-      </div>
-
     </div><!-- /right -->
   </div>
 </div>
@@ -876,37 +839,33 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 /* ── EMOJI-TO-IMAGE lookup via Twemoji CDN ──────────────────── */
 /* We use Google's Noto Emoji or OpenMoji for realistic drink images */
 const PROD_IMAGES = {
-  /* Kellerbar */
+  /* ── Kellerbar ── */
   'Helles':           'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
   'Radler':           'https://em-content.zobj.net/source/google/387/lemon_1f34b.png',
-  'Äppler Becher':    'https://em-content.zobj.net/source/google/387/cup-with-straw_1f964.png',
-  'Äppler Flasche':   'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
+  'Äppler Becher':    'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
+  'Äppler Flasche':   'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
+  'Spezi':            'https://em-content.zobj.net/source/google/387/cup-with-straw_1f964.png',
+  'Limo':             'https://em-content.zobj.net/source/google/387/lemon_1f34b.png',
+  'Mate':             'https://em-content.zobj.net/source/google/387/beverage-box_1f9c3.png',
   'Sekt':             'https://em-content.zobj.net/source/google/387/champagne-glass_1f942.png',
   'Weißwein':         'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
   'Rotling':          'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
-  'Sekt Mate':        'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
-  'Vodka Mate':       'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
-  'Vodka Bull':       'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
-  'Spezi':            'https://em-content.zobj.net/source/google/387/soft-ice-cream_1f366.png',
-  'Limo':             'https://em-content.zobj.net/source/google/387/lemon_1f34b.png',
-  'Mate':             'https://em-content.zobj.net/source/google/387/teacup-without-handle_1f375.png',
-  'Pfeffi Shot':      'https://em-content.zobj.net/source/google/387/cocktail-glass_1f378.png',
-  'Vodka Shot':       'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
-  'Limoncello Shot':  'https://em-content.zobj.net/source/google/387/cocktail-glass_1f378.png',
+  'Sekt Mate':        'https://em-content.zobj.net/source/google/387/champagne-glass_1f942.png',
+  'Vodka Mate':       'https://em-content.zobj.net/source/google/387/tropical-drink_1f379.png',
+  'Vodka Bull':       'https://em-content.zobj.net/source/google/387/tropical-drink_1f379.png',
+  'Shot':             'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
   'Blind Shot':       'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
   'Sekt Flasche':     'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
   'Pfeffi Flasche':   'https://em-content.zobj.net/source/google/387/herb_1f33f.png',
-  'Bierpong Special': 'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
-  /* Erdgeschossbar */
-  'Prosecco':         'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
-  'Matte':            'https://em-content.zobj.net/source/google/387/teacup-without-handle_1f375.png',
+  'Bierpong':         'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
+  /* ── Erdgeschossbar ── */
   'Äppler':           'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
+  'Prosecco':         'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
   'Wein rot':         'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
-  'Shot Tequila':     'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
-  'Shot Vodka':       'https://em-content.zobj.net/source/google/387/cocktail-glass_1f378.png',
-  'Cola':             'https://em-content.zobj.net/source/google/387/soft-drink_1f964.png',
-  'Wasser':           'https://em-content.zobj.net/source/google/387/droplet_1f4a7.png',
+  'Matte':            'https://em-content.zobj.net/source/google/387/beverage-box_1f9c3.png',
+  'Cola':             'https://em-content.zobj.net/source/google/387/cup-with-straw_1f964.png',
   'Orangensaft':      'https://em-content.zobj.net/source/google/387/tangerine_1f34a.png',
+  'Wasser':           'https://em-content.zobj.net/source/google/387/droplet_1f4a7.png',
 };
 
 const FLOORS = {
@@ -959,7 +918,7 @@ function switchFloor(id){
   Object.keys(FLOORS).forEach(fid=>{
     document.getElementById('tab-'+fid)?.classList.toggle('active',fid===id);
   });
-  renderCats(); renderProducts(); renderCart(); updateDisplay(); loadLastOrders(); switchPortraitTab('products');
+  renderCats(); renderProducts(); renderCart(); updateDisplay(); switchPortraitTab('products');
 }
 
 /* ── products ── */
@@ -1121,7 +1080,6 @@ async function pay(method){
       floor_id:floor,total,method,items:allItems
     })});
     clearCart();
-    loadLastOrders();
     toast((method==='Bargeld'?'💶':'🅿️')+' Zahlung erfasst ✓');
   }catch(e){toast('Fehler: '+e.message);}
 }
@@ -1281,37 +1239,6 @@ function switchPortraitTab(tab){
   document.querySelector('.right')?.classList.toggle('ptab-active', tab==='cart');
 }
 
-/* ── letzte Bestellungen ── */
-async function loadLastOrders(){
-  try{
-    const txs=await api('/api/transactions');
-    renderLastOrders(txs.slice(0,3));
-  }catch(e){}
-}
-
-function renderLastOrders(orders){
-  const el=document.getElementById('last-orders-list');
-  if(!el) return;
-  if(!orders||!orders.length){
-    el.innerHTML='<div class="lo-row"><span class="lo-desc" style="color:var(--text3)">Noch keine Bestellungen heute</span></div>';
-    return;
-  }
-  el.innerHTML=orders.map(tx=>{
-    const time=(tx.created_at||'').slice(11,16);
-    const floorEmoji=FLOORS[tx.floor_id]?.emoji||'🏪';
-    const methodIcon=tx.method==='Bargeld'?'💶':'🅿️';
-    const items=(tx.items||[]).filter(i=>i.id!=='pfand-v'&&i.id!=='pfand-r');
-    const pfandPart=(tx.items||[]).some(i=>i.id==='pfand-v'||i.id==='pfand-r')?' 🪙':'';
-    const desc=items.slice(0,3).map(i=>`${i.qty}× ${i.name.split(' ')[0]}`).join(' · ')||'—';
-    return `<div class="lo-row">
-      <span class="lo-time">${time}</span>
-      <span class="lo-icons">${floorEmoji}${methodIcon}</span>
-      <span class="lo-desc">${desc}${pfandPart}</span>
-      <span class="lo-amt">${fmt(tx.total)}</span>
-    </div>`;
-  }).join('');
-}
-
 /* ── PIN ── */
 function requirePin(cb){
   if(pinUnlocked){cb();return;}
@@ -1362,14 +1289,14 @@ function connectWS(){
     const{event}=JSON.parse(e.data);
     const d=document.getElementById('conn-dot');
     d.style.transform='scale(1.8)';setTimeout(()=>d.style.transform='',400);
-    if(event==='transaction'){loadLastOrders();if(document.getElementById('screen-stats').classList.contains('active')) loadStats();}
+    if(event==='transaction'&&document.getElementById('screen-stats').classList.contains('active')) loadStats();
     if(event==='products_changed'){loadAllProducts().then(()=>{renderCats();renderProducts();});}
     if(event==='reset'&&document.getElementById('screen-stats').classList.contains('active')) loadStats();
   };
 }
 
 /* ── BOOT ── */
-(async()=>{await loadAllProducts();switchFloor('keller');loadLastOrders();switchPortraitTab('products');connectWS();})();
+(async()=>{await loadAllProducts();switchFloor('keller');switchPortraitTab('products');connectWS();})();
 </script>
 </body>
 </html>
