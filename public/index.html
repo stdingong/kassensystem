@@ -315,46 +315,46 @@ body{
   flex-shrink:0;
   background:var(--bg-np);
   border-top:1.5px solid var(--border2);
-  padding:10px 12px 12px;
+  padding:6px 10px 8px;
 }
 
 /* Given / Rückgeld */
 .gr-row{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:6px;
-  margin-bottom:8px;
+  gap:5px;
+  margin-bottom:6px;
 }
 .gr-box{
   background:var(--bg-npbtn);
   border:1px solid var(--border2);
-  border-radius:10px;
-  padding:10px 14px;
+  border-radius:8px;
+  padding:5px 12px;
   display:flex;
   flex-direction:column;
-  gap:2px;
+  gap:1px;
 }
-.gr-lbl{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
-.gr-val{font-size:26px;font-weight:900;color:var(--text);line-height:1;}
+.gr-lbl{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.gr-val{font-size:20px;font-weight:900;color:var(--text);line-height:1.1;}
 
 /* Numpad + Bills side by side */
 .np-bills{
   display:grid;
   grid-template-columns:3fr 1fr;
-  gap:7px;
-  margin-bottom:8px;
+  gap:5px;
+  margin-bottom:6px;
 }
 .numpad{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:5px;
+  gap:4px;
 }
 .np{
-  height:50px;
-  border-radius:8px;
+  height:40px;
+  border-radius:7px;
   border:1px solid var(--border2);
   background:var(--bg-npbtn);
-  font-size:20px;
+  font-size:18px;
   font-weight:700;
   cursor:pointer;
   font-family:inherit;
@@ -364,16 +364,16 @@ body{
   display:flex;align-items:center;justify-content:center;
 }
 .np:active{transform:scale(.9);background:var(--bg-np);}
-.np-del{background:var(--bg-np);font-size:18px;}
+.np-del{background:var(--bg-np);font-size:16px;}
 
 /* Bill buttons */
 .bills{
   display:grid;
   grid-template-rows:repeat(4,1fr);
-  gap:5px;
+  gap:4px;
 }
 .bill{
-  border-radius:8px;
+  border-radius:7px;
   border:1.5px solid #c8a040;
   background:#fdf5d5;
   color:#7a5500;
@@ -384,8 +384,7 @@ body{
   display:flex;align-items:center;justify-content:center;
   box-shadow:var(--shadow-btn);
   transition:all .08s;
-  font-size: 18px;    /* Schrift etwas größer (vorher 15px) */
-  min-height: 50px;
+  min-height:40px;
 }
 .bill:active{transform:scale(.9);}
 .bill.sel{background:var(--accent);border-color:#8a5500;color:#fff;}
@@ -394,17 +393,17 @@ body{
 .pay-btns{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
+  gap:6px;
 }
 .pay-btn{
-  height:54px;
-  border-radius:10px;
+  height:46px;
+  border-radius:9px;
   border:none;
-  font-size:16px;
+  font-size:15px;
   font-weight:800;
   cursor:pointer;
   font-family:inherit;
-  display:flex;align-items:center;justify-content:center;gap:8px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
   box-shadow:var(--shadow-btn);
   transition:all .1s;
 }
@@ -518,13 +517,13 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 .pfand-btns{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
-  padding:8px 12px;
+  gap:6px;
+  padding:5px 10px;
   flex-shrink:0;
   border-top:1.5px solid var(--border2);
 }
 .pfand-btn{
-  border-radius:12px;
+  border-radius:9px;
   border:2px solid;
   font-weight:900;
   cursor:pointer;
@@ -533,9 +532,9 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:3px;
-  padding:10px 6px;
-  line-height:1.25;
+  gap:2px;
+  padding:6px 6px;
+  line-height:1.2;
   text-align:center;
   text-transform:uppercase;
   letter-spacing:.3px;
@@ -543,9 +542,9 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
   transition:all .1s;
 }
 .pfand-btn:active{transform:scale(.95);}
-.pfand-btn-icon{font-size:22px;line-height:1;}
-.pfand-btn-label{font-size:13px;}
-.pfand-btn-price{font-size:12px;font-weight:700;opacity:.85;}
+.pfand-btn-icon{font-size:18px;line-height:1;}
+.pfand-btn-label{font-size:11px;}
+.pfand-btn-price{font-size:10px;font-weight:700;opacity:.85;}
 .pfand-vergabe  {background:#d1fae5;border-color:#059669;color:#065f46;}
 .pfand-rueckgabe{background:#fee2e2;border-color:#dc2626;color:#991b1b;}
 
@@ -663,16 +662,16 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
   .right{border-left:none;}
   .left.ptab-active,.right.ptab-active{display:flex;}
 
-  /* Slightly smaller numpad & pay buttons to fit payment area */
-  .np{height:44px;font-size:17px;}
-  .bill{min-height:44px;font-size:16px;}
-  .pay-btn{height:48px;font-size:15px;}
+  /* Slightly smaller numpad & pay buttons in portrait */
+  .np{height:36px;font-size:16px;}
+  .bill{min-height:36px;font-size:14px;}
+  .pay-btn{height:42px;font-size:14px;}
 
   /* More compact pfand buttons in portrait */
-  .pfand-btn{padding:6px;}
-  .pfand-btn-icon{font-size:20px;}
-  .pfand-btn-label{font-size:12px;}
-  .pfand-btn-price{font-size:11px;}
+  .pfand-btn{padding:4px 5px;}
+  .pfand-btn-icon{font-size:16px;}
+  .pfand-btn-label{font-size:10px;}
+  .pfand-btn-price{font-size:10px;}
 
   /* Smaller product images so more fit on screen */
   .prod-img{height:90px;}
