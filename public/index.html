@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="/manifest.json"/>
 <title>Kassensystem</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -91,6 +95,7 @@ body{
   transition:all .15s;
 }
 .nav-action:active{background:rgba(255,255,255,0.2);}
+.nav-fs{padding:0;width:36px;font-size:18px;}
 .conn-dot{width:10px;height:10px;border-radius:50%;background:#555;transition:background .3s;margin-left:4px;}
 .conn-dot.ok{background:#4ade80;}
 .conn-dot.err{background:#f87171;}
@@ -662,6 +667,7 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
   <div class="nav-right">
     <button class="nav-action" onclick="requirePin(()=>showScreen('stats'))">📊 Statistik</button>
     <button class="nav-action" onclick="requireAdmin()">⚙️ Admin</button>
+    <button class="nav-action nav-fs" id="btn-fs" onclick="toggleFullscreen()" title="Vollbild">⛶</button>
     <div class="conn-dot" id="conn-dot"></div>
   </div>
 </nav>
@@ -1292,6 +1298,47 @@ function connectWS(){
     if(event==='reset'&&document.getElementById('screen-stats').classList.contains('active')) loadStats();
   };
 }
+
+/* ── FULLSCREEN ── */
+function updateFsBtn(){
+  const btn=document.getElementById('btn-fs');
+  if(!btn) return;
+  btn.textContent=document.fullscreenElement?'✕⛶':'⛶';
+  btn.title=document.fullscreenElement?'Vollbild beenden':'Vollbild';
+}
+
+async function tryFullscreen(){
+  try{
+    await document.documentElement.requestFullscreen({navigationUI:'hide'});
+    await screen.orientation?.lock?.('portrait').catch(()=>{});
+  }catch(e){}
+  updateFsBtn();
+}
+
+function exitFullscreen(){
+  document.exitFullscreen?.().catch(()=>{});
+}
+
+function toggleFullscreen(){
+  if(document.fullscreenElement) exitFullscreen();
+  else tryFullscreen();
+}
+
+document.addEventListener('fullscreenchange', updateFsBtn);
+
+// Auto-trigger fullscreen on the very first user touch or click
+(function(){
+  let done=false;
+  function onFirst(e){
+    if(done||document.fullscreenElement) return;
+    done=true;
+    tryFullscreen();
+    document.removeEventListener('touchstart',onFirst,true);
+    document.removeEventListener('click',onFirst,true);
+  }
+  document.addEventListener('touchstart',onFirst,{capture:true,once:true});
+  document.addEventListener('click',onFirst,{capture:true,once:true});
+})();
 
 /* ── BOOT ── */
 (async()=>{await loadAllProducts();switchFloor('keller');switchPortraitTab('products');connectWS();})();

@@ -1,0 +1,9 @@
+{
+  "name": "Kassensystem",
+  "short_name": "Kasse",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "start_url": "/",
+  "theme_color": "#2a2018",
+  "background_color": "#2a2018"
+}
