@@ -567,102 +567,50 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
 /* ════════════════════════════════════════
-   PORTRAIT TAB BAR  (only shown in portrait)
-════════════════════════════════════════ */
-.portrait-tabbar{
-  display:none;
-  flex-shrink:0;
-  background:var(--bg-nav);
-  border-bottom:2px solid rgba(0,0,0,.4);
-}
-.ptab{
-  height:48px;
-  border:none;
-  background:transparent;
-  color:rgba(255,255,255,.55);
-  font-size:15px;
-  font-family:inherit;
-  font-weight:700;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  border-bottom:3px solid transparent;
-  transition:all .15s;
-  -webkit-tap-highlight-color:transparent;
-}
-.ptab.active{
-  background:rgba(255,255,255,.13);
-  color:#fff;
-  border-bottom-color:var(--accent);
-}
-#cart-tab-badge{
-  background:var(--accent);
-  color:#fff;
-  border-radius:10px;
-  font-size:11px;
-  padding:2px 7px;
-  font-weight:900;
-  min-width:20px;
-  text-align:center;
-  display:none;
-}
-#cart-tab-badge.has-items{display:inline-block;}
-
-/* ════════════════════════════════════════
-   TABLET / SMALL-SCREEN LAYOUT
-   Greift auf iPads aller Größen (quer + hoch)
-   und auf Bildschirmen ≤ 1200 px Breite
+   TABLET / KOMPAKT-LAYOUT  (≤ 1200 px)
+   Beide Panels bleiben nebeneinander sichtbar.
+   Nur Abstände und Schriftgrößen werden reduziert.
 ════════════════════════════════════════ */
 @media (max-width:1200px){
-  /* POS-Screen als Spalte: Tabbar oben, Inhalt unten */
-  #screen-pos{
-    flex-direction:column;
-  }
-  .portrait-tabbar{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-  #screen-pos>.main{
-    position:relative;
-    flex:1;
-    min-height:0;
+  /* Rechtes Panel: feste Breite, nicht zu schmal */
+  .right{
+    flex:none;
+    width:clamp(260px, 38%, 360px);
   }
 
-  /* Beide Panels füllen die volle Fläche, nur eins sichtbar */
-  .left,.right{
-    position:absolute;
-    inset:0;
-    width:100% !important;
-    flex:none !important;
-    min-width:0 !important;
-    display:none;
-  }
-  .right{border-left:none;}
-  .left.ptab-active,.right.ptab-active{display:flex;}
-
-  /* Kasse-Panel: auf breiten Displays zentriert und begrenzt */
-  .right.ptab-active{
-    max-width:560px;
-    margin:0 auto;
-  }
-
-  /* Numpad & Buttons etwas kompakter */
-  .np{height:38px;font-size:17px;}
-  .bill{min-height:38px;font-size:15px;}
-  .pay-btn{height:44px;font-size:14px;}
+  /* Numpad & Buttons kompakter */
+  .np{height:36px;font-size:16px;}
+  .bill{min-height:36px;font-size:14px;}
+  .pay-btn{height:42px;font-size:14px;}
+  .gr-val{font-size:17px;}
 
   /* Pfand-Buttons kompakter */
-  .pfand-btn{padding:5px 6px;}
-  .pfand-btn-icon{font-size:17px;}
-  .pfand-btn-label{font-size:11px;}
-  .pfand-btn-price{font-size:10px;}
+  .pfand-btns{padding:4px 8px;}
+  .pfand-btn{padding:4px 4px;}
+  .pfand-btn-icon{font-size:15px;}
+  .pfand-btn-label{font-size:10px;}
+  .pfand-btn-price{font-size:9px;}
 
-  /* Produktbilder etwas kleiner → mehr Kacheln sichtbar */
-  .prod-img{height:90px;}
-  .prod-img img{width:64px;height:64px;}
-  .prod-img-emoji{font-size:54px;}
+  /* Produktbilder kleiner → mehr Kacheln sichtbar */
+  .prod-img{height:80px;}
+  .prod-img img{width:56px;height:56px;}
+  .prod-img-emoji{font-size:46px;}
+  .prod-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:7px;padding:8px 10px;}
+  .prod-foot-name{font-size:12px;}
+  .prod-foot-price{font-size:13px;}
+
+  /* Kategorieleiste kompakter */
+  .cat-pill{height:30px;padding:0 12px;font-size:13px;}
+  .cat-bar{padding:6px 10px;gap:5px;}
+
+  /* Warenkorb-Abstände kompakter */
+  .cart-head{padding:8px 10px 4px;}
+  .cart-list{padding:2px 8px;}
+  .total-block{padding:5px 10px 4px;}
+  .pay-area{padding:4px 8px 6px;}
+  .np-bills{gap:4px;margin-bottom:5px;}
+  .gr-row{margin-bottom:4px;}
+  .gr-box{padding:4px 8px;}
 }
 </style>
 </head>
@@ -687,16 +635,10 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 <!-- POS -->
 <div class="screen active" id="screen-pos">
 
-  <!-- Portrait-only tab bar -->
-  <div class="portrait-tabbar">
-    <button class="ptab active" id="ptab-products" onclick="switchPortraitTab('products')">🛍️ Produkte</button>
-    <button class="ptab"        id="ptab-cart"     onclick="switchPortraitTab('cart')">🛒 Warenkorb <span id="cart-tab-badge"></span></button>
-  </div>
-
   <div class="main" style="width:100%;display:flex;overflow:hidden;flex:1;min-height:0;">
 
     <!-- LEFT -->
-    <div class="left ptab-active">
+    <div class="left">
       <div class="floor-head">
         <span class="floor-head-icon" id="fh-icon">🍺</span>
         <span class="floor-head-name" id="fh-name">Kellerbar</span>
@@ -852,34 +794,34 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 <div class="toast" id="toast"></div>
 
 <script>
-/* ── EMOJI-TO-IMAGE lookup via Twemoji CDN ──────────────────── */
-/* We use Google's Noto Emoji or OpenMoji for realistic drink images */
+const T = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/';
 const PROD_IMAGES = {
   /* ── Kellerbar ── */
-  'Helles':           'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
-  'Radler':           'https://em-content.zobj.net/source/google/387/lemon_1f34b.png',
-  'Äppler Becher':    'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
-  'Äppler Flasche':   'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
-  'Softdrink':        'https://em-content.zobj.net/source/google/387/cup-with-straw_1f964.png',
-  'Sekt':             'https://em-content.zobj.net/source/google/387/champagne-glass_1f942.png',
-  'Weißwein':         'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
-  'Rotling':          'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
-  'Sekt Mate':        'https://em-content.zobj.net/source/google/387/champagne-glass_1f942.png',
-  'Vodka Mate':       'https://em-content.zobj.net/source/google/387/tropical-drink_1f379.png',
-  'Vodka Bull':       'https://em-content.zobj.net/source/google/387/tropical-drink_1f379.png',
-  'Shot':             'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
-  'Blind Shot':       'https://em-content.zobj.net/source/google/387/tumbler-glass_1f943.png',
-  'Sekt Flasche':     'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
-  'Pfeffi Flasche':   'https://em-content.zobj.net/source/google/387/herb_1f33f.png',
-  'Bierpong':         'https://em-content.zobj.net/source/google/387/beer-mug_1f37a.png',
+  'Helles':           T+'1f37a.svg',   /* 🍺 Bierkrug */
+  'Radler':           T+'1f37b.svg',   /* 🍻 Anstoßen */
+  'Äppler Becher':    T+'1f34f.svg',   /* 🍏 grüner Apfel */
+  'Äppler Flasche':   T+'1f376.svg',   /* 🍶 Flasche (anders als Sektflasche) */
+  'Softdrink':        T+'1f964.svg',   /* 🥤 Becher mit Strohhalm */
+  'Sekt':             T+'1f942.svg',   /* 🥂 Sektgläser */
+  'Weißwein':         T+'1f378.svg',   /* 🍸 Cocktailglas (hell) */
+  'Rotling':          T+'1f377.svg',   /* 🍷 Rotweinglas */
+  'Sekt Mate':        T+'1f9c9.svg',   /* 🧉 Mate-Kürbis */
+  'Vodka Mate':       T+'1f379.svg',   /* 🍹 Tropical-Drink */
+  'Vodka Bull':       T+'1f9cb.svg',   /* 🧋 Bubble Tea / Energy */
+  'Shot':             T+'1f943.svg',   /* 🥃 Tumbler */
+  'Blind Shot':       T+'1f3b2.svg',   /* 🎲 Würfel = Mystery */
+  'Sekt Flasche':     T+'1f37e.svg',   /* 🍾 Champagnerflasche */
+  'Pfeffi Flasche':   T+'1f33f.svg',   /* 🌿 Kräuter */
+  'Bierpong':         T+'1f3d3.svg',   /* 🏓 Tischtennis */
   /* ── Erdgeschossbar ── */
-  'Äppler':           'https://em-content.zobj.net/source/google/387/green-apple_1f34f.png',
-  'Prosecco':         'https://em-content.zobj.net/source/google/387/bottle-with-popping-cork_1f37e.png',
-  'Wein rot':         'https://em-content.zobj.net/source/google/387/wine-glass_1f377.png',
-  'Matte':            'https://em-content.zobj.net/source/google/387/beverage-box_1f9c3.png',
-  'Cola':             'https://em-content.zobj.net/source/google/387/cup-with-straw_1f964.png',
-  'Orangensaft':      'https://em-content.zobj.net/source/google/387/tangerine_1f34a.png',
-  'Wasser':           'https://em-content.zobj.net/source/google/387/droplet_1f4a7.png',
+  'Äppler':           T+'1f34f.svg',   /* 🍏 grüner Apfel */
+  'Prosecco':         T+'1f37e.svg',   /* 🍾 Flasche */
+  'Wein rot':         T+'1f377.svg',   /* 🍷 Rotweinglas */
+  'Matte':            T+'1f9c9.svg',   /* 🧉 Mate */
+  'Cola':             T+'1f964.svg',   /* 🥤 Becher */
+  'Orangensaft':      T+'1f34a.svg',   /* 🍊 Orange */
+  'Spezi':            T+'1f9c3.svg',   /* 🧃 Juice Box */
+  'Wasser':           T+'1f4a7.svg',   /* 💧 Tropfen */
 };
 
 const FLOORS = {
@@ -932,7 +874,7 @@ function switchFloor(id){
   Object.keys(FLOORS).forEach(fid=>{
     document.getElementById('tab-'+fid)?.classList.toggle('active',fid===id);
   });
-  renderCats(); renderProducts(); renderCart(); updateDisplay(); switchPortraitTab('products');
+  renderCats(); renderProducts(); renderCart(); updateDisplay();
 }
 
 /* ── products ── */
@@ -1010,11 +952,6 @@ function renderCart(){
     `inkl. 19% MwSt: ${fmt(tax)}&nbsp;&nbsp;&nbsp;&nbsp;P: 0% Pfand`;
   document.getElementById('btn-cash').disabled=!hasAnything;
   document.getElementById('btn-paypal').disabled=!hasAnything;
-
-  // Portrait cart tab badge
-  const badgeCount=cart.reduce((s,i)=>s+i.qty,0)+p.vergabe+p.rueckgabe;
-  const badge=document.getElementById('cart-tab-badge');
-  if(badge){badge.textContent=badgeCount||'';badge.classList.toggle('has-items',badgeCount>0);}
 
   const el=document.getElementById('cart-list');
   if(!hasAnything){el.innerHTML='<p class="cart-empty">Noch keine Artikel</p>';return;}
@@ -1245,14 +1182,6 @@ async function changePin(){
   try{const r=await api('/api/auth/change-pin',{method:'POST',body:JSON.stringify({adminPassword:c,newPin:p})});r.ok?(pinUnlocked=false,toast('PIN geändert ✓')):toast('Fehler: '+r.error);}catch{toast('Fehler');}
 }
 
-/* ── portrait tabs ── */
-function switchPortraitTab(tab){
-  document.getElementById('ptab-products')?.classList.toggle('active', tab==='products');
-  document.getElementById('ptab-cart')?.classList.toggle('active', tab==='cart');
-  document.querySelector('.left')?.classList.toggle('ptab-active', tab==='products');
-  document.querySelector('.right')?.classList.toggle('ptab-active', tab==='cart');
-}
-
 /* ── PIN ── */
 function requirePin(cb){
   if(pinUnlocked){cb();return;}
@@ -1351,7 +1280,7 @@ document.addEventListener('fullscreenchange', updateFsBtn);
 })();
 
 /* ── BOOT ── */
-(async()=>{await loadAllProducts();switchFloor('keller');switchPortraitTab('products');connectWS();})();
+(async()=>{await loadAllProducts();switchFloor('keller');connectWS();})();
 </script>
 </body>
 </html>
