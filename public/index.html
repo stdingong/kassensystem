@@ -666,12 +666,12 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
         <button class="pfand-btn pfand-vergabe" onclick="addPfand('vergabe')">
           <span class="pfand-btn-icon">🪙</span>
           <span class="pfand-btn-label">Pfandvergabe</span>
-          <span class="pfand-btn-price">(+1.00 €)</span>
+          <span class="pfand-btn-price">(+0.50 €)</span>
         </button>
         <button class="pfand-btn pfand-rueckgabe" onclick="addPfand('rueckgabe')">
           <span class="pfand-btn-icon">🔄</span>
           <span class="pfand-btn-label">Pfandrückgabe</span>
-          <span class="pfand-btn-price">(-1.00 €)</span>
+          <span class="pfand-btn-price">(-0.50 €)</span>
         </button>
       </div>
 
@@ -838,7 +838,7 @@ let activeCat = 'Alle';
 let npRaw     = '';
 let pinUnlocked=false, adminUnlocked=false, adminPwCache='', pinCb=null, pinVal='';
 
-const PFAND_PRICE = 1.00;
+const PFAND_PRICE = 0.5;
 
 const fmt = n => Number(n).toFixed(2).replace('.',',') + ' €';
 
@@ -969,7 +969,7 @@ function renderCart(){
   if(p.vergabe>0) html+=`
     <div class="cart-row">
       <span class="ci">🪙</span>
-      <span class="cn" style="font-size:14px">Pfandvergabe (+1.00 €)</span>
+      <span class="cn" style="font-size:14px">Pfandvergabe (+0.50 €)</span>
       <button class="qb" onclick="changePfand('vergabe',-1)">−</button>
       <span class="qn">${p.vergabe}</span>
       <button class="qb" onclick="changePfand('vergabe',1)">+</button>
@@ -979,7 +979,7 @@ function renderCart(){
   if(p.rueckgabe>0) html+=`
     <div class="cart-row">
       <span class="ci">🔄</span>
-      <span class="cn" style="font-size:14px">Pfandrückgabe (-1.00 €)</span>
+      <span class="cn" style="font-size:14px">Pfandrückgabe (-0.50 €)</span>
       <button class="qb" onclick="changePfand('rueckgabe',-1)">−</button>
       <span class="qn">${p.rueckgabe}</span>
       <button class="qb" onclick="changePfand('rueckgabe',1)">+</button>
