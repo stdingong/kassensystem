@@ -590,6 +590,95 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ════════════════════════════════════════
+   PORTRAIT TAB BAR  (only shown in portrait)
+════════════════════════════════════════ */
+.portrait-tabbar{
+  display:none;
+  flex-shrink:0;
+  background:var(--bg-nav);
+  border-bottom:2px solid rgba(0,0,0,.4);
+}
+.ptab{
+  height:48px;
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,.55);
+  font-size:15px;
+  font-family:inherit;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border-bottom:3px solid transparent;
+  transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ptab.active{
+  background:rgba(255,255,255,.13);
+  color:#fff;
+  border-bottom-color:var(--accent);
+}
+#cart-tab-badge{
+  background:var(--accent);
+  color:#fff;
+  border-radius:10px;
+  font-size:11px;
+  padding:2px 7px;
+  font-weight:900;
+  min-width:20px;
+  text-align:center;
+  display:none;
+}
+#cart-tab-badge.has-items{display:inline-block;}
+
+/* ════════════════════════════════════════
+   PORTRAIT LAYOUT  (@media)
+════════════════════════════════════════ */
+@media (orientation:portrait){
+  #screen-pos{
+    flex-direction:column;
+  }
+  .portrait-tabbar{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  #screen-pos>.main{
+    position:relative;
+    flex:1;
+    min-height:0;
+  }
+  /* Both panels fill the full main area, only one visible at a time */
+  .left,.right{
+    position:absolute;
+    inset:0;
+    width:100% !important;
+    flex:none !important;
+    min-width:0 !important;
+    display:none;
+  }
+  .right{border-left:none;}
+  .left.ptab-active,.right.ptab-active{display:flex;}
+
+  /* Slightly smaller numpad & pay buttons to fit payment area */
+  .np{height:44px;font-size:17px;}
+  .bill{min-height:44px;font-size:16px;}
+  .pay-btn{height:48px;font-size:15px;}
+
+  /* More compact pfand buttons in portrait */
+  .pfand-btn{padding:6px;}
+  .pfand-btn-icon{font-size:20px;}
+  .pfand-btn-label{font-size:12px;}
+  .pfand-btn-price{font-size:11px;}
+
+  /* Smaller product images so more fit on screen */
+  .prod-img{height:90px;}
+  .prod-img img,.prod-img-emoji{width:62px;height:62px;}
+  .prod-img-emoji{font-size:52px;}
+}
 </style>
 </head>
 <body>
@@ -611,10 +700,17 @@ table.t td{padding:9px 12px;border-bottom:1px solid var(--border);}
 
 <!-- POS -->
 <div class="screen active" id="screen-pos">
+
+  <!-- Portrait-only tab bar -->
+  <div class="portrait-tabbar">
+    <button class="ptab active" id="ptab-products" onclick="switchPortraitTab('products')">🛍️ Produkte</button>
+    <button class="ptab"        id="ptab-cart"     onclick="switchPortraitTab('cart')">🛒 Warenkorb <span id="cart-tab-badge"></span></button>
+  </div>
+
   <div class="main" style="width:100%;display:flex;overflow:hidden;flex:1;min-height:0;">
 
     <!-- LEFT -->
-    <div class="left">
+    <div class="left ptab-active">
       <div class="floor-head">
         <span class="floor-head-icon" id="fh-icon">🍺</span>
         <span class="floor-head-name" id="fh-name">Kellerbar</span>
@@ -864,7 +960,7 @@ function switchFloor(id){
   Object.keys(FLOORS).forEach(fid=>{
     document.getElementById('tab-'+fid)?.classList.toggle('active',fid===id);
   });
-  renderCats(); renderProducts(); renderCart(); updateDisplay(); loadLastOrders();
+  renderCats(); renderProducts(); renderCart(); updateDisplay(); loadLastOrders(); switchPortraitTab('products');
 }
 
 /* ── products ── */
@@ -942,6 +1038,11 @@ function renderCart(){
     `inkl. 19% MwSt: ${fmt(tax)}&nbsp;&nbsp;&nbsp;&nbsp;P: 0% Pfand`;
   document.getElementById('btn-cash').disabled=!hasAnything;
   document.getElementById('btn-paypal').disabled=!hasAnything;
+
+  // Portrait cart tab badge
+  const badgeCount=cart.reduce((s,i)=>s+i.qty,0)+p.vergabe+p.rueckgabe;
+  const badge=document.getElementById('cart-tab-badge');
+  if(badge){badge.textContent=badgeCount||'';badge.classList.toggle('has-items',badgeCount>0);}
 
   const el=document.getElementById('cart-list');
   if(!hasAnything){el.innerHTML='<p class="cart-empty">Noch keine Artikel</p>';return;}
@@ -1173,6 +1274,14 @@ async function changePin(){
   try{const r=await api('/api/auth/change-pin',{method:'POST',body:JSON.stringify({adminPassword:c,newPin:p})});r.ok?(pinUnlocked=false,toast('PIN geändert ✓')):toast('Fehler: '+r.error);}catch{toast('Fehler');}
 }
 
+/* ── portrait tabs ── */
+function switchPortraitTab(tab){
+  document.getElementById('ptab-products')?.classList.toggle('active', tab==='products');
+  document.getElementById('ptab-cart')?.classList.toggle('active', tab==='cart');
+  document.querySelector('.left')?.classList.toggle('ptab-active', tab==='products');
+  document.querySelector('.right')?.classList.toggle('ptab-active', tab==='cart');
+}
+
 /* ── letzte Bestellungen ── */
 async function loadLastOrders(){
   try{
@@ -1261,7 +1370,7 @@ function connectWS(){
 }
 
 /* ── BOOT ── */
-(async()=>{await loadAllProducts();switchFloor('keller');loadLastOrders();connectWS();})();
+(async()=>{await loadAllProducts();switchFloor('keller');loadLastOrders();switchPortraitTab('products');connectWS();})();
 </script>
 </body>
 </html>
